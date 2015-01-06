@@ -11,32 +11,13 @@ import os,  time
 import web, json, ast 
 #from factories import cloudFactory
 from openstackRestAdaptor import *
-
-
-
-
-#Read From Config File
-username ="admin" 
-password = "xamin"
-tenant = "admin"
-controller = "http://10.1.48.25"
-
-"""
-username ="admin" 
-password = "admin"
-tenant = "admin"
-controller = "http://10.1.48.242"
-"""
-params = dict(); 
-params["username"] = username
-params["password"] = password
-params["tenant"] = tenant
-params["controller"] = controller
-
-demmo_user_time = 10
+import config
 
 #adaptor = cloudFactory.cloudFactory.factory("openstackRest", params)
-adaptor = openstackRestAdaptor(params)
+adaptor = openstackRestAdaptor( {"username" : config.username, \
+                                 "password": config.password, \
+                                 "tenant": config.tenant, \
+                                 "controller": config.controller})
 urls=(
     '/', 'hello',
     '/bye', 'bye',
@@ -77,15 +58,17 @@ class user_manipulation :
         return True
         
     def __demo_user(self, user):
-        if not self.__add_project(user['project'], "This is a Demo Project for user " + user['name'], 51200, 1, 1) :
+        if not self.__add_project(user['project'] + time.strftime("%Y%m%d_%H%M%S", time.gmtime()), "This is a Demo Project for user " + user['name'], 51200, 1, 1) :
             return False
         if not self.__add_user(user['name'],user['pass'],user['project']) :
             return False
+        print "in demo user before adding role...."
+        adaptor.add_user_role(user['name'], user['project'])
 
         newpid = os.fork()
         if newpid == 0: # Child
-            print 'I am child %d and time is %s ' % (os.getpid(), demmo_user_time)
-            time.sleep(demmo_user_time)
+            print 'Time is %s ' % config.demo_user_time
+            time.sleep(config.demo_user_time)
             print; print; print "Im Removing Demo User & Project....................."
             self.__remove_project(user['project'])
             self.__remove_user(user['name'])

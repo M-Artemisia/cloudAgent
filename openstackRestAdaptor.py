@@ -25,7 +25,8 @@ class openstackRestAdaptor():
         self.tenant = params["tenant"]
         self.controller = params["controller"]
         self.admin_token = self.get_token(self.username,self.password,self.tenant)
-
+        #TEST MALI
+        self.__list_roles()
 
     def get_token(self,username,password,tenant ):
 
@@ -55,6 +56,40 @@ class openstackRestAdaptor():
         if not result :
             return False
         print "the added user is: "; print result; print; print #TEST
+        return True
+
+    def add_user_role(self, username, project):
+
+        print "add user role......."
+        tenants = self. __tenants_list()
+        if not tenants :
+            return False
+        tenant_id = "" 
+        for tenant in tenants :
+            if tenant['name'] == project :
+                tenant_id = tenant['id']
+
+        if tenant_id == "":
+            print "There is not such user in open stack users!"
+            return False
+
+        users = self.list_users()
+        if not users :
+            return False
+        user_id = ""
+        for user in users :
+            if username == user['name'] :
+                user_id = user['id']
+        if user_id == "":
+            print "There is not such user in open stack users!"
+            return False
+
+        print "userid=%s and project_id=%s" % (user_id, tenant_id)
+        result = self.__curl_function(self.controller + ':5000/v3/projects/' + tenant_id + '/users/' + user_id + '/roles/' + self.member_role_id , \
+                                      ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], '204', 'PUT')
+        if not result :
+            return False
+        print "the role is added to  user ", username; print result; print; print #TEST
         return True
 
 
@@ -90,6 +125,24 @@ class openstackRestAdaptor():
         users = result["users"]
         #print "all of Users: ", users  #TEST
         return users
+
+
+    def __list_roles(self):
+
+        result = self.__curl_function(self.controller + ':5000/v3/roles', \
+                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], \
+                              '200', 'GET')
+        if not result :
+            return False
+        roles = result["roles"]
+        for role in roles :
+            if role["name"] == "admin" : 
+                self.admin_role_id = role["id"]
+            if role["name"] == "_member_" : 
+                self.member_role_id = role["id"]
+
+        return roles
+
 
 
     def add_tenant(self, name, desc, ram, vcpu, instances):
@@ -182,8 +235,10 @@ class openstackRestAdaptor():
             pass
         elif method == 'PUT':
             curlObj.setopt(pycurl.CUSTOMREQUEST,'PUT')
-            curlObj.setopt(pycurl.POST,1)
-            curlObj.setopt(pycurl.POSTFIELDS,request)
+            print "in PUT: ", url, headers_list, response_code, method, request
+            if request is not None: 
+                curlObj.setopt(pycurl.POST,1)
+                curlObj.setopt(pycurl.POSTFIELDS,request)
         else :
             print "Unkonw http method....", method
             return False
@@ -197,6 +252,8 @@ class openstackRestAdaptor():
             print e
         curlObj.close()
     
+        if method == 'PUT' :
+            print headers.getvalue(), data.getvalue()
         #status_code = curlObj.getinfo(pycurl.HTTP_CODE)    
         if headers.getvalue() is None :
             return False
