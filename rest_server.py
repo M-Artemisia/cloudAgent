@@ -38,7 +38,8 @@ urls=(
     '/bye', 'bye',
     '/images', 'list_images',
     '/user', 'user_manipulation',
-    '/projects/(*.)', 'projects',
+    '/user/(.*)', 'user_manipulation',
+    '/projects/(.*)', 'projects',
     
 )
 
@@ -56,29 +57,42 @@ class user_manipulation :
         data = web.data()
         user_dict = dict(); user_dict = ast.literal_eval(data)
         data_dict = user_dict['user']
-        print data_dict
 
         if "demo" in data_dict['project']  :
             out = adaptor.add_tenant(data_dict['project'],"Demo Project for user " + data_dict['name'], 51200,1,1)
-            """
+            
             if not out :
-                print "im in not ....... "
+                print "Error Accured in Adding Project ....... "
                 return False
-            """
-        users = adaptor.add_user(data_dict['name'],data_dict['pass'],data_dict['project']) 
 
-        result = adaptor.remove_tenant(data_dict['project'])
+        if not adaptor.add_user(data_dict['name'],data_dict['pass'],data_dict['project']) :
+            print "Error Accured in Adding User ....... "
+            return False
+
         #convert user to JSON if it is needed
         #Convert Dict to json: json.dumps()
         #Convert json to Dict: json.loads()
-        
-        return users
+        return True
  
+
+    def DELETE(self, user_name):
+
+        if not  adaptor.remove_user(user_name):
+            print "Error Accured in Removing  User ....... "
+            return False
+        print "user %s is deleted!" % user_name
+        return True 
+
+
 class projects():   
-    def DELETE(self,project_name):
-        print "im in delete function "
-        result = adaptor.remove_tenant(project_name)
-        return result 
+    def DELETE(self, project_name):
+
+        if not adaptor.remove_tenant(project_name):
+            print "Error Accured in Removing  Project ....... "
+            return False
+        print "project %s is deleted!" % project_name
+        return True 
+
 
 class hello:        
     def GET(self):
