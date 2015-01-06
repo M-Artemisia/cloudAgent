@@ -7,13 +7,15 @@
 #sudo easy_install web.py
 
 
-import web
-import json
-import ast 
+import os,  time
+import web, json, ast 
 #from factories import cloudFactory
 from openstackRestAdaptor import *
-#Read From Config File
 
+
+
+
+#Read From Config File
 username ="admin" 
 password = "xamin"
 tenant = "admin"
@@ -30,6 +32,8 @@ params["username"] = username
 params["password"] = password
 params["tenant"] = tenant
 params["controller"] = controller
+
+demmo_user_time = 10
 
 #adaptor = cloudFactory.cloudFactory.factory("openstackRest", params)
 adaptor = openstackRestAdaptor(params)
@@ -55,33 +59,75 @@ class user_manipulation :
 
     def POST(self):
         data = web.data()
-        user_dict = dict(); user_dict = ast.literal_eval(data)
-        data_dict = user_dict['user']
+        data_dict = dict(); data_dict = ast.literal_eval(data)
+        user_dict = data_dict['user']
 
-        if "demo" in data_dict['project']  :
-            out = adaptor.add_tenant(data_dict['project'],"Demo Project for user " + data_dict['name'], 51200,1,1)
-            
-            if not out :
-                print "Error Accured in Adding Project ....... "
-                return False
+        if "demo" in user_dict['project'] :
+            return self.__demo_user(user_dict)
+        
+        if not self.__add_project(user_dict['project'], user_dict['description'], user_dict['ram'], user_dict['vcpu'], user_dict['instances']):
+            return False
 
-        if not adaptor.add_user(data_dict['name'],data_dict['pass'],data_dict['project']) :
-            print "Error Accured in Adding User ....... "
+        if not self.__add_user(user_dict['name'],user_dict['pass'],user_dict['project']) :
             return False
 
         #convert user to JSON if it is needed
         #Convert Dict to json: json.dumps()
         #Convert json to Dict: json.loads()
         return True
- 
+        
+    def __demo_user(self, user):
+        if not self.__add_project(user['project'], "This is a Demo Project for user " + user['name'], 51200, 1, 1) :
+            return False
+        if not self.__add_user(user['name'],user['pass'],user['project']) :
+            return False
 
-    def DELETE(self, user_name):
+        newpid = os.fork()
+        if newpid == 0: # Child
+            print 'I am child %d and time is %s ' % (os.getpid(), demmo_user_time)
+            time.sleep(demmo_user_time)
+            print; print; print "Im Removing Demo User & Project....................."
+            self.__remove_project(user['project'])
+            self.__remove_user(user['name'])
+            os._exit(0)  
 
+        return True
+        
+    def __add_user(self, name, password, project ):
+        if not adaptor.add_user(name, password, project) :
+            print "Error Accured in Adding User ....... "
+            return False
+        return True
+
+    def __add_project(self, project, description, ram, vcpu, instances):
+        out = adaptor.add_tenant(project, description, ram, vcpu, instances)
+        if not out :
+                print "Error Accured in Adding Project ....... "
+                return False
+        return True
+
+
+    def __remove_project(self, project_name):
+        if not adaptor.remove_tenant(project_name):
+            print "Error Accured in Removing  Project ....... "
+            return False
+        print "project %s is deleted!" % project_name
+        return True 
+
+
+    def __remove_user(self, user_name):
         if not  adaptor.remove_user(user_name):
             print "Error Accured in Removing  User ....... "
             return False
         print "user %s is deleted!" % user_name
         return True 
+
+
+    def DELETE(self, user_name):
+        if not self. __remove_user(user_name): 
+            return False
+        return True 
+
 
 
 class projects():   
