@@ -7,10 +7,9 @@
 #Features:
 
 
-import os
+import os, re
 import sys
-import pycurl, json
-from io import BytesIO
+import curl
 
 class openstackRestAdaptor():
     """
@@ -30,9 +29,9 @@ class openstackRestAdaptor():
 
     def get_token(self,username,password,tenant ):
 
-        request = json.dumps({"auth": {"tenantName": tenant  , "passwordCredentials": {"username": username  , "password": password }}})
-        result = self.__curl_function(self.controller + ':5000/v2.0/tokens', \
-                                      ['Content-Type: application/json', "Accept: application/json"], '200', 'POST', request)
+        request = {"auth": {"tenantName": tenant  , "passwordCredentials": {"username": username  , "password": password }}}
+        result = curl.curl(self.controller + ':5000/v2.0/tokens', ['Content-Type: application/json', 'Accept: application/json'], '200', 'POST', request)
+       
         if not result :
             return False
         return result['access']['token']['id']
@@ -48,8 +47,8 @@ class openstackRestAdaptor():
             if tenant['name'] == project :
                 tenant_id = tenant['id']
 
-        request = json.dumps({"user": {"name": name , "password": password, "email" : name, "default_project_id": tenant_id }})
-        result = self.__curl_function(self.controller + ':5000/v3/users', \
+        request = {"user": {"name": name , "password": password, "email" : name, "default_project_id": tenant_id }}
+        result = curl.curl(self.controller + ':5000/v3/users', \
                                       ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant) ,\
                                        'Content-Type: application/json', 'Accept: application/json'], \
                                       '201', 'POST', request)
@@ -60,17 +59,18 @@ class openstackRestAdaptor():
 
     def add_user_role(self, username, project):
 
-        print "add user role......."
+        print "add user role.......", username, project
         tenants = self. __tenants_list()
         if not tenants :
             return False
+
         tenant_id = "" 
         for tenant in tenants :
             if tenant['name'] == project :
                 tenant_id = tenant['id']
 
         if tenant_id == "":
-            print "There is not such user in open stack users!"
+            print "There is not such project in open stack users!"
             return False
 
         users = self.list_users()
@@ -84,9 +84,10 @@ class openstackRestAdaptor():
             print "There is not such user in open stack users!"
             return False
 
-        print "userid=%s and project_id=%s" % (user_id, tenant_id)
-        result = self.__curl_function(self.controller + ':5000/v3/projects/' + tenant_id + '/users/' + user_id + '/roles/' + self.member_role_id , \
-                                      ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], '204', 'PUT')
+        print "userid=%s and project_id=%s member_role=%s" % (user_id, tenant_id, self.member_role_id)
+        result = curl.curl(self.controller + ':5000/v3/projects/' + tenant_id + '/users/' + user_id + '/roles/' + self.member_role_id , \
+                                      ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), 'Content-Type: application/json'], '204', 'PUT')
+
         if not result :
             return False
         print "the role is added to  user ", username; print result; print; print #TEST
@@ -106,7 +107,7 @@ class openstackRestAdaptor():
             print "There is not such user in open stack users!"
             return False
         print "Remove User: name = %s id = %s " % (username, user_id) ; print; print ##TEST 
-        result = self.__curl_function(self.controller + ':5000/v3/users/' + user_id, \
+        result = curl.curl(self.controller + ':5000/v3/users/' + user_id, \
                                           ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], \
                                           '204', 'DELETE')
         if not result:
@@ -117,7 +118,7 @@ class openstackRestAdaptor():
 
     def list_users(self):
 
-        result = self.__curl_function(self.controller + ':5000/v3/users', \
+        result = curl.curl(self.controller + ':5000/v3/users', \
                               ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], \
                               '200', 'GET')
         if not result :
@@ -129,7 +130,7 @@ class openstackRestAdaptor():
 
     def __list_roles(self):
 
-        result = self.__curl_function(self.controller + ':5000/v3/roles', \
+        result = curl.curl(self.controller + ':5000/v3/roles', \
                               ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], \
                               '200', 'GET')
         if not result :
@@ -147,8 +148,8 @@ class openstackRestAdaptor():
 
     def add_tenant(self, name, desc, ram, vcpu, instances):
 
-        request = json.dumps({"project": {"description": desc , "enabled": True , "name": name, "domain_id" : "default" }})
-        result = self.__curl_function(self.controller + ':5000/v3/projects', \
+        request = {"project": {"description": desc , "enabled": True , "name": name, "domain_id" : "default" }}
+        result = curl.curl(self.controller + ':5000/v3/projects', \
                                       ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant) ,\
                                        'Content-Type: application/json', 'Accept: application/json'], \
                                       '201', 'POST', request)
@@ -168,8 +169,8 @@ class openstackRestAdaptor():
                         admin_tenant_id = tenant['id']
         print "ADMIN TENANT ID IS: " , admin_tenant_id;  print; print#TEST
         
-        request = json.dumps({"quota_set": {"cores": vcpu , "instances": instances , "ram": ram }})
-        result = self.__curl_function(self.controller + ':8774/v2/' + admin_tenant_id + '/os-quota-sets/' + current_tenant_id, \
+        request = {"quota_set": {"cores": vcpu , "instances": instances , "ram": ram }}
+        result = curl.curl(self.controller + ':8774/v2/' + admin_tenant_id + '/os-quota-sets/' + current_tenant_id, \
                               ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant),'Content-Type: application/json', "Accept: application/json"], \
                                       '200', 'PUT', request)
         if not result :
@@ -181,7 +182,7 @@ class openstackRestAdaptor():
 
     def __tenants_list(self):
 
-        result = self.__curl_function(self.controller + ':5000/v3/projects', \
+        result = curl.curl(self.controller + ':5000/v3/projects', \
                               ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json"], \
                               '200', 'GET')
         if not result :
@@ -210,7 +211,7 @@ class openstackRestAdaptor():
         print "Remove Projects: name = %s id = %s" % (project_name, tenant_ids) ##TEST 
         for i in  tenant_ids :
             result = ""
-            result = self.__curl_function(self.controller + ':5000/v3/projects/' + tenant_ids.pop(), \
+            result = curl.curl(self.controller + ':5000/v3/projects/' + tenant_ids.pop(), \
                                           ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json"], \
                                           '204', 'DELETE')
             if not result:
@@ -219,52 +220,39 @@ class openstackRestAdaptor():
         return True
     
 
-    def __curl_function(self, url, headers_list, response_code, method, request = None):
 
-        data = BytesIO()        
-        headers = BytesIO()        
-        curlObj = pycurl.Curl()
-
-        curlObj.setopt(pycurl.URL, url )
-        curlObj.setopt(pycurl.HTTPHEADER,headers_list)
-        if method == 'DELETE':
-            curlObj.setopt(pycurl.CUSTOMREQUEST,'DELETE')
-        elif method == 'POST':
-            curlObj.setopt(pycurl.POSTFIELDS,request)
-        elif method == 'GET':
-            pass
-        elif method == 'PUT':
-            curlObj.setopt(pycurl.CUSTOMREQUEST,'PUT')
-            print "in PUT: ", url, headers_list, response_code, method, request
-            if request is not None: 
-                curlObj.setopt(pycurl.POST,1)
-                curlObj.setopt(pycurl.POSTFIELDS,request)
-        else :
-            print "Unkonw http method....", method
-            return False
+    def add_image(self, appliance_spec):
     
-        curlObj.setopt(pycurl.WRITEFUNCTION,data.write)
-        curlObj.setopt(pycurl.HEADERFUNCTION,headers.write)
+        print "in add image func....."
 
-        try :
-            curlObj.perform()
-        except Exception as e:
-            print e
-        curlObj.close()
-    
-        if method == 'PUT' :
-            print headers.getvalue(), data.getvalue()
-        #status_code = curlObj.getinfo(pycurl.HTTP_CODE)    
-        if headers.getvalue() is None :
+        header_list = ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant),  'x-image-meta-disk_format: qcow2', 'x-image-meta-container_format: bare','x-image-meta-is_public: true']
+
+        if appliance_spec['url'] == "None" or appliance_spec['name'] == "None" :
+            print "Appliance Name & appliance URL can't be None!"
             return False
 
-        if response_code in headers.getvalue().splitlines()[0] :
-            if data.getvalue() is not "":
-                return json.loads(data.getvalue())
-            else :
-                return True
-        else :
-            print "Error...", json.loads(data.getvalue())["error"]["message"]
-            return False
             
-        
+        header_list.append('x-glance-api-copy-from: ' + re.match(r'(.*).xvm2',appliance_spec['url']).group(1) + '.qcow2' )
+        header_list.append('x-image-meta-name: ' + appliance_spec['name'])
+
+
+        if appliance_spec["installed_size"] != "None" :
+            print "installed size is: ", appliance_spec["installed_size"]
+            header_list.append('x-image-meta-size: ' + appliance_spec["installed_size"])
+
+
+        if appliance_spec["memory"] != "None" :
+            header_list.append('x-image-meta-min_ram: ' + appliance_spec["memory"])
+
+        if appliance_spec["storage"] != "None" :
+            header_list.append('x-image-meta-min_disk: ' + appliance_spec["storage"])
+ 
+
+        print "header list is: ", header_list
+        result = curl.curl(self.controller + ':9292/v1/images', header_list, '201', 'POST')
+
+        if not result :
+            return False
+        print "this image meta-data is added: "; print result; print; print #TEST
+        image_id = result['image']['id']
+        return {"image_id": image_id}

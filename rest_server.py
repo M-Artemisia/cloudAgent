@@ -22,6 +22,7 @@ urls=(
     '/', 'hello',
     '/bye', 'bye',
     '/images', 'list_images',
+    '/images/(.*)', 'add_images',
     '/user', 'user_manipulation',
     '/user/(.*)', 'user_manipulation',
     '/projects/(.*)', 'projects',
@@ -30,8 +31,37 @@ urls=(
 
 class list_images:        
     def GET(self):
+        print "im in list images....................." #TEST
         images = adaptor.list_images()
         return images
+
+class add_images:        
+
+    def GET(self):
+        print "im in add image, GET....................." #TEST
+        print web.data().decode('UTF-8')
+        return True
+
+    def POST(self, name):
+        print "im in add image....................." #TEST
+        data = web.data().decode('UTF-8')
+
+        #print "data type is: ", type (data) #TEST
+        #print "data is", data #TEST
+
+
+        data_dict = dict(); 
+        data_dict = ast.literal_eval(data)
+        image_dict = data_dict['image']
+        
+        print "image dictionary is: ", image_dict #TEST
+
+        images = adaptor.add_image(image_dict)
+
+        print "images r: ", images #TEST
+
+        return images
+
 
 class user_manipulation :
     def GET(self):
@@ -58,12 +88,13 @@ class user_manipulation :
         return True
         
     def __demo_user(self, user):
-        if not self.__add_project(user['project'] + time.strftime("%Y%m%d_%H%M%S", time.gmtime()), "This is a Demo Project for user " + user['name'], 51200, 1, 1) :
+        demo_project = user['project'] + time.strftime("%Y%m%d_%H%M%S", time.gmtime())
+        if not self.__add_project(demo_project, "This is a Demo Project for user " + user['name'], 51200, 1, 1) :
             return False
         if not self.__add_user(user['name'],user['pass'],user['project']) :
             return False
         print "in demo user before adding role...."
-        adaptor.add_user_role(user['name'], user['project'])
+        adaptor.add_user_role(user['name'], demo_project)
 
         newpid = os.fork()
         if newpid == 0: # Child
