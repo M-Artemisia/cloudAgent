@@ -2,15 +2,16 @@
 #Auther: Mali Asemani, ml.asemani@gmail.com
 #Date: 15-Jan-10
 
-#jenkins Client run this code to add new built image to openstack 
+#jenkins Client.
+#run this code to add new built image to openstack 
 
-
-#import curl
 import yaml, sys
 import pycurl, json
 from io import BytesIO
 
-
+#---Python Pathes---
+sys.path.append('/etc/xpl/')
+import xpl_settings as settings
 
 
 def curl(url, headers_list, response_code, method, req = None):
@@ -80,7 +81,6 @@ def curl(url, headers_list, response_code, method, req = None):
 def app_spec(path) :
 
     f=open(path, "r")
-    print path
     doc=yaml.load(f)
     appliance_info_dic={}
     appliance_info_dic["name"]    = str(doc["name"])
@@ -109,29 +109,31 @@ def main(path_to_appspec):
     """
     Main Program
     """
-    xamin_cloud_agent_url = '127.0.0.1'
     request = {"image": app_spec(path_to_appspec)}
-    xamin_cloud_agent_url = xamin_cloud_agent_url  + ':8000/images/' + request["image"]["name"]
+    url = settings.xaminCloudAgentUrl  + ':' + settings.xaminCloudAgentPort  + '/images/' + request["image"]["name"]
     header_list = ['Content-Type: application/json']
+    print "URL=%s RESPONSE_CODE=%s HTTP_METHOD=%s HEADER_LIST=%s" %(url,  '200', 'POST',header_list)
+    print "REQUEST=%s " % request
 
-    result = curl(xamin_cloud_agent_url, header_list, '200', 'POST', request)
+    result = curl(url, header_list, '200', 'POST', request)
     
     print result
 
 
 if __name__ == '__main__':
-    
+
     try:
         currentJobName = sys.argv[1]
-        #appGitName = sys.argv[2]
+        if len(sys.argv) == 2 :
+            appGitName = currentJobName 
+        else:
+            appGitName = sys.argv[2]
         pass
     except:
         print "no appliance input given"
         sys.exit(1)
 
-    #path_to_appspec = settings.jenkinsHome + currentJobName + "/workspace/" + appGitName + "/app-spec"
-    path_to_appspec =  currentJobName + "/app-spec"
+    path_to_appspec = settings.jenkinsHome + currentJobName + "/workspace/" + appGitName + "/app-spec"
     main(path_to_appspec)
-
 
     #curl -X POST 127.0.0.1:8000/images/stageb -H 'Content-Type: application/json' -d '{"image": {"name": "stageb", "url": "http://release.xamin.ir/appliances/0ad48498473444f1122c8e9883333ae6.xvm2"}}'
