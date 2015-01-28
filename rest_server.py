@@ -9,15 +9,18 @@
 
 import os,  time
 import web, json, ast 
-#from factories import cloudFactory
-from openstackRestAdaptor import *
+from factories import cloudFactory
+#from openstackRestAdaptor import *
 import config
 
-#adaptor = cloudFactory.cloudFactory.factory("openstackRest", params)
-adaptor = openstackRestAdaptor( {"username" : config.username, \
+adaptor = cloudFactory.cloudFactory.factory("openstackRest", {"username" : config.username, \
                                  "password": config.password, \
                                  "tenant": config.tenant, \
                                  "controller": config.controller})
+#adaptor = openstackRestAdaptor( {"username" : config.username, \
+#                                 "password": config.password, \
+#                                 "tenant": config.tenant, \
+#                                 "controller": config.controller})
 urls=(
     '/', 'hello',
     '/bye', 'bye',

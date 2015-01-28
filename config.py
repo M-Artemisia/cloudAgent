@@ -10,4 +10,4 @@ password = "xamin"
 tenant = "admin"
 controller = "http://10.1.48.25"
 """
-demo_user_time = 60
+demo_user_time = 60000

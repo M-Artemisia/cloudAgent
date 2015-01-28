@@ -1,0 +1,110 @@
+#!/usr/bin/python
+#Auther: Mali Asemani, ml.asemani@gmail.com
+#Date: 14-Nov-5
+
+#This module is an adaptor for openstack.
+#It connecets Openstack to Xamin GUIs 
+#This module features are:
+
+
+import os
+import sys
+from subprocess import check_call,call
+import subprocess
+import ast,re
+
+import pycurl, StringIO, json
+from io import BytesIO
+import urllib2
+import base64
+
+class openstackRestAdaptor():
+    """
+    this pattern convert some interfaces of openstak classes. 
+    like list images in glance and so on 
+    """
+
+    def __init__(self, params ):
+
+        self.username = params["username"]
+        self.password = params["password"]
+        self.tenant = params["tenant"]
+        self.controller = params["controller"]
+        self.admin_token = self.get_token(self.username,self.password,self.tenant)
+
+    def get_token(self,username,password,tenant ):
+
+        request = '{"auth": {"tenantName": "' + tenant + '", "passwordCredentials": {"username": "' + username + '", "password": "' + password + '"}}}'
+        p=subprocess.Popen(['curl', '-i',\
+                            self.controller + ':5000/v2.0/tokens',\
+                            '-X', 'POST', \
+                            '-H', "Content-Type: application/json",\
+                            '-H', "Accept: application/json",\
+                            '-d', request \
+                        ],stdout=subprocess.PIPE).communicate()[0].split('\n')[6]
+
+        token_obj = re.search('id": "(.+?)"',p)
+        token=""
+        print "*********************"
+        if token_obj is None :
+            print "Token not find....."
+        else:
+            token = token_obj.group(1)
+        
+        return token
+
+    def add_user(self,name, password,project):
+        
+        print "in add_users func....."
+
+        print "list projects .........."
+        #curl -i self.controller + ':5000/v3/projects' -H 'X-Auth-Token:'+ self.admin_token 
+        #find project ID.......
+        
+        print "create user........."
+        return True
+
+
+    def remove_user(self,name):
+
+        print "in remove_user func....."
+        print "list users & find userID....... "
+        
+        return True
+
+
+    def add_tenant(self, name, desc, ram, storage, vcpu):
+
+        print "in add_tenant func....."
+        print "creae a tenant.........."        
+        print "******************"
+        
+        request='\'{"project": {"description":"'+ desc + '",' + \
+                '"enabled":true,' + \
+                '"domain_id":"default",' + '"name":"'+ name + '"}}\''
+    
+        auth_token = 'X_Auth_Token: ' + self.get_token(self.username,self.password,self.tenant) #+ '\''
+        p=subprocess.Popen(['curl', '-i',\
+                            '-X', 'POST', \
+                            '-H ', auth_token, \
+                            self.controller + ':5000/v3/projects' \
+                            '-H', '"Content-Type: application/json"',\
+                            '-H', '"Accept: application/json"'#,\
+                            '-d', request \
+                        ],stdout=subprocess.PIPE).communicate()[0].split('\n')
+        print p
+        
+        print "creat a quota .........."
+        
+        return True #return True OR FALSE Based ON Response Number
+
+
+    def remove_tenant(self,name,enable,desc):
+
+        print "in remove_tenant func....."
+
+        print "list projects & find  project ID....... "
+                project_id = 0 #default
+        print "remove project..........."
+        
+        return True

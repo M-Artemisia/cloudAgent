@@ -1,0 +1,233 @@
+#!/usr/bin/python
+#Auther: Mali Asemani, ml.asemani@gmail.com
+#Date: 14-Nov-5
+
+#This module is an adaptor for openstack.
+#It connecets Openstack to Xamin GUIs 
+#This module features are:
+
+
+import os
+import sys
+from subprocess import check_call,call
+import subprocess
+import ast,re
+
+import pycurl, StringIO, json
+from io import BytesIO
+import urllib2
+import base64
+
+class openstackRestAdaptor():
+    """
+    this pattern convert some interfaces of openstak classes. 
+    like list images in glance and so on 
+    """
+
+    def __init__(self, params ):
+
+        self.username = params["username"]
+        self.password = params["password"]
+        self.tenant = params["tenant"]
+        self.controller = params["controller"]
+        self.admin_token = self.get_token(self.username,self.password,self.tenant)
+
+    def get_token(self,username,password,tenant ):
+
+        request = json.dumps({"auth": {"tenantName": tenant  , "passwordCredentials": {"username": username  , "password": password }}})
+        curlObj = pycurl.Curl()
+        curlObj.setopt(pycurl.URL, self.controller + ':5000/v2.0/tokens')
+        curlObj.setopt(pycurl.HTTPHEADER,['Content-Type: application/json','Accept: application/json'])
+        curlObj.setopt(pycurl.POSTFIELDS,request)
+        data = BytesIO()        
+        curlObj.setopt(pycurl.WRITEFUNCTION,data.write)
+        curlObj.perform()
+        curlObj.close()
+        return json.loads(data.getvalue())['access']['token']['id']
+
+    def add_user(self,name, password,project):
+        
+        print "in add_users func....."
+
+        print "list projects .........."
+        #curl -i self.controller + ':5000/v3/projects' -H 'X-Auth-Token:'+ self.admin_token 
+        #find project ID.......
+        
+        print "create user........."
+        """
+        curl -i self.controller + ':5000/v3/projects' -X POST -H 'Content-Type: application/json' -H "Accept: application/json" -H 'X-Auth-Token:'+ self.admin_token  -d \
+            '"user": {' + \
+                '"default_project_id":' +  project_id + ','+ \
+                '"description": "Demo User",' + \
+                '"email": '+ name + ',' \
+                '"enabled": true,' + \
+                '"name":' + name + ',' \
+                '"password":' + password + '}}'
+        """
+        return True
+
+
+    def remove_user(self,name):
+
+        print "in remove_user func....."
+        print "list users & find userID....... "
+        """
+        curl -i self.controller + ':5000/v3/users' -H 'X-Auth-Token:'+ self.admin_token 
+        #get User id 
+        user_id = 0 #default
+        print "remove user"
+        curl -i self.controller + ':5000/v3/users/' + user_id -H 'X-Auth-Token:'+ self.admin_token -X DELETE 
+        """
+        return True
+
+
+    def add_tenant(self, name, desc, ram, storage, vcpu):
+
+        print "in add_tenant func....."
+        print "creae a tenant.........."        
+        print "******************"
+
+        data = BytesIO()        
+        headers = BytesIO()        
+        curlObj = pycurl.Curl()
+        request = json.dumps({"project": {"description": desc , "enabled": True , "name": name, "domain_id" : "default" }})
+
+        curlObj.setopt(pycurl.URL, self.controller + ':5000/v3/projects')
+        curlObj.setopt(pycurl.HTTPHEADER,['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant),'Content-Type: application/json','Accept: application/json'])
+        curlObj.setopt(pycurl.POSTFIELDS,request)
+
+        curlObj.setopt(pycurl.WRITEFUNCTION,data.write)
+        curlObj.setopt(pycurl.HEADERFUNCTION,headers.write)        
+        #status_code = curlObj.getinfo(pycurl.HTTP_CODE)
+        try :
+            curlObj.perform()
+        except Exception as e:
+            print e
+        curlObj.close()
+        
+        if "201" in headers.getvalue().splitlines()[0] :
+            print "SUCCESS: tenant is added"
+            pass 
+        else :
+            print "Error...", json.loads(data.getvalue())["error"]["message"]
+            return False
+        
+        print "******************"
+        print "creat a quota .........."
+
+        
+        return True #return True OR FALSE Based ON Response Number
+
+
+    def remove_tenant(self, project_name):
+
+        print "in remove_tenant func....."
+        self.__curl_function(self.controller + ':5000/v3/projects', \
+                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json"], \
+                              '200', 'GET')
+
+        self.__curl_function(self.controller + ':5000/v3/projects', \
+                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json"], \
+                              '200', 'GET')
+
+
+
+
+        """
+        print "list projects & find  project ID....... "
+        data = BytesIO()        
+        headers = BytesIO()        
+        curlObj = pycurl.Curl()
+        
+        curlObj.setopt(pycurl.URL, self.controller + ':5000/v3/projects')
+        curlObj.setopt(pycurl.HTTPHEADER,['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json"])
+        curlObj.setopt(pycurl.WRITEFUNCTION,data.write)
+        curlObj.setopt(pycurl.WRITEFUNCTION,headers.write)
+        try :
+            curlObj.perform()
+        except Exception as e:y
+            print e
+        curlObj.close()
+
+        if "200" in headers.getvalue() :
+            print "SUCCESS: tenant list is returned"
+            continue 
+        else :
+            print "Error...", json.loads(data.getvalue())["error"]["message"]
+            return False
+            
+        projects = json.loads(data.getvalue())["projects"]
+        project_ids = []
+        for project in projects:
+            if project_name in project['name'] :
+                project_ids.append(project['id'])
+
+
+
+        print "******************"
+        print "Remove Projects: ", project_ids
+        data = BytesIO()        
+        headers = BytesIO()        
+        curlObj = pycurl.Curl()
+        for i in  project_ids :
+            curlObj.setopt(pycurl.URL, self.controller + ':5000/v3/projects/' + project_ids.pop() )
+            curlObj.setopt(pycurl.HTTPHEADER,['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json"])
+            curlObj.setopt(pycurl.CUSTOMREQUEST,'DELETE')
+            curlObj.setopt(pycurl.WRITEFUNCTION,data.write)
+            curlObj.setopt(pycurl.HEADERFUNCTION,headers.write)
+            try :
+                curlObj.perform()
+            except Exception as e:
+                print e
+            curlObj.close()
+            
+            if "204" in headers.getvalue() :
+                print "SUCCESS: tenant is deleted"
+                pass 
+            else :
+                print "Error...", json.loads(data.getvalue())["error"]["message"]
+                return False
+         """
+        return True
+    
+    def __curl_function(self, url, headers_list, response_code, method, request = None):
+
+        data = BytesIO()        
+        headers = BytesIO()        
+        curlObj = pycurl.Curl()
+
+        curlObj.setopt(pycurl.URL, url )
+        curlObj.setopt(pycurl.HTTPHEADER,headers_list)
+        if method == 'DELETE':
+            print "in DEL"
+            curlObj.setopt(pycurl.CUSTOMREQUEST,'DELETE')
+        elif method == 'POST':
+            print "in POST"
+            curlObj.setopt(pycurl.POSTFIELDS,request)
+        elif method == 'GET':
+            print "in GET"
+            pass
+        else :
+            print "Unkonw http method...."
+            return False
+    
+        curlObj.setopt(pycurl.WRITEFUNCTION,data.write)
+        curlObj.setopt(pycurl.HEADERFUNCTION,headers.write)
+
+        try :
+            curlObj.perform()
+        except Exception as e:
+            print e
+        curlObj.close()
+    
+    
+        print "In CURL function ... "
+        print "header is ", headers.getvalue() , "data is ", data.getvalue()
+        if response_code in headers.getvalue() :
+            print "SUCCESSFUL CURL Command"
+            pass 
+        else :
+            print "Error...", json.loads(data.getvalue())["error"]["message"]
+            return False
+            
+        return 

@@ -1,2 +1,6 @@
+testToolsAndInfo
+testToolsAndInfo/*
+*.tar.gz
+*~
+#*
 *.pyc
-*.~

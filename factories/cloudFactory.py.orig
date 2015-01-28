@@ -1,0 +1,93 @@
+#!/usr/bin/python
+#Auther: Mali Asemani, ml.asemani@gmail.com
+#Date: 14-Nov-5
+
+from cloudStack import *
+from openStack import *
+from openStack import openstackCliAdaptor,openstackRestAdaptor,openstackSdkAdaptor
+from abc import ABCMeta, abstractmethod
+
+#Factory method Pattern
+class cloudFactory():
+    """
+    this pattern abtract factory class for create cloud adaptors
+    """
+    #it should be singletont too
+    # Create based on class name:
+    def factory(classType,params): #TODO: get variable number of params for diffrent constructor
+        #return eval(type + "()")
+        if classType == "openstackCli": return openstackCliAdaptor(params)
+        if classType == "openstackRest": return openstackRestAdaptor(params)
+        if classType == "openstackSdk": return openstackSdkAdaptor(params)
+        if classType == "cloudstack": return cloudstackImplAdaptor(params)
+        assert 0, "Bad adaptor creation: " + classType
+    factory = staticmethod(factory)
+                    
+
+#This class is an adaptor for openstack.
+#It connecets Openstack to Xamin GUIs 
+#features:
+#     1) add an created image by Jenkins to Glance
+#     2) list images on Glance
+#     3) list flavers on Compute
+#     4) install an insance on nova
+
+#Abstract Class: Adaptor Pattern 
+class openstackAbstractAdaptor():
+    """
+    this pattern convert some interfaces of openstak classes. 
+    like list images in glance and so on 
+    """
+
+    __metaclass__ = ABCMeta
+        
+    @abstractmethod
+    def list_images(self): pass
+
+    @abstractmethod        
+    def list_flavors(self): pass
+
+    @abstractmethod
+    def install_image(self,instance_name, image='cirros-0.3.2-x86_64', flavor='m1.tiny', \
+                      security_group = 'default', key_name = 'demo-key',nic = None): pass    
+        
+    @abstractmethod
+    def get_vnc_url(self,instance): pass
+
+    @abstractmethod    
+    def register_to_image_db(self, appliance_spec, container, is_publich): pass
+
+
+
+
+#This class is an adaptor for cloudstack.
+#It connecets Clooudstack to Xamin GUIs 
+#Features:
+#     1) add an created image by Jenkins on ...
+#     2) list images on ....
+#     3) list flavers on ....
+#     4) install an insance on....
+
+#Adaptor Pattern
+class cloudstackAbstractAdaptor():#cloudAdaptor
+    """
+    this pattern convert some interfaces of openstak classes. 
+    like list images in glance and so on 
+    """
+
+    __metaclass__ = ABCMeta
+        
+    @abstractmethod
+    def list_images(self): pass
+
+    @abstractmethod        
+    def list_flavors(self): pass
+
+    @abstractmethod
+    def install_image(self): pass    
+        
+    @abstractmethod
+    def get_vnc_url(self): pass
+
+    @abstractmethod    
+    def register_to_image_db(self): pass
