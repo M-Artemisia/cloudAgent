@@ -7,20 +7,28 @@
 #sudo easy_install web.py
 
 
-import os,  time
+
+import os, sys, time
 import web, json, ast 
+
+
+app_path = os.path.dirname(__file__)
+sys.path.append(app_path)
+
+if app_path:
+    os.chdir(app_path)
+else:
+    app_path = os.getcwd()
+
+
 from factories import cloudFactory
-#from openstackRestAdaptor import *
 import config
 
 adaptor = cloudFactory.cloudFactory.factory("openstackRest", {"username" : config.username, \
                                  "password": config.password, \
                                  "tenant": config.tenant, \
                                  "controller": config.controller})
-#adaptor = openstackRestAdaptor( {"username" : config.username, \
-#                                 "password": config.password, \
-#                                 "tenant": config.tenant, \
-#                                 "controller": config.controller})
+
 urls=(
     '/', 'hello',
     '/bye', 'bye',
@@ -31,6 +39,11 @@ urls=(
     '/projects/(.*)', 'projects',
     
 )
+
+app = web.application(urls, globals(), autoreload=False)
+application = app.wsgifunc()
+
+
 
 class list_images:        
     def GET(self):
@@ -89,7 +102,8 @@ class user_manipulation :
         #Convert Dict to json: json.dumps()
         #Convert json to Dict: json.loads()
         return True
-        
+
+
     def __demo_user(self, user):
         demo_project = user['project'] + time.strftime("%Y%m%d_%H%M%S", time.gmtime())
         if not self.__add_project(demo_project, "This is a Demo Project for user " + user['name'], 51200, 1, 1) :
@@ -173,12 +187,4 @@ class bye:
 
 
 if __name__ == "__main__":
-
-    app=web.application(urls, globals())
     app.run()
-
-
-
-#curl -i -X POST -v 127.0.0.1:8000/bye  -H 'Content-Type: application/json' -H "Accept: application/json" -d '{"user":"mali";"password":"maliheAsemani"}'
-
-#curl -i -X POST  -v 127.0.0.1:8000/user  -H 'Cotent-Type: application/json' -H "Accept: application/json" -d '{"user":{"name":"malihe","pass":"maliheasemani","project":"demo2"}}'

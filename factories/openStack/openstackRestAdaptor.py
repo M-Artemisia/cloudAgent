@@ -7,9 +7,8 @@
 #Features:
 
 
-import os, re
-import sys
-import curl
+import os, sys, re
+from curly import curl
 from openstackAbstractAdaptor import openstackAbstractAdaptor
 
 class openstackRestAdaptor(openstackAbstractAdaptor):
@@ -18,14 +17,12 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
     like list images in glance and so on 
     """
 
-    def __init__(self, params):
+    def __init__(self, params ):
 
-        print "im in init of rest..............."
         self.username = params["username"]
         self.password = params["password"]
         self.tenant = params["tenant"]
         self.controller = params["controller"]
-        print "im in init of rest..............."
         self.admin_token = self.get_token(self.username,self.password,self.tenant)
         #TEST MALI
         self.__list_roles()
@@ -33,11 +30,11 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
     def get_token(self,username,password,tenant ):
 
         request = {"auth": {"tenantName": tenant  , "passwordCredentials": {"username": username  , "password": password }}}
-        result = curl.curl(self.controller + ':5000/v2.0/tokens', ['Content-Type: application/json', 'Accept: application/json'], '200', 'POST', request)
+        result = curl(self.controller + ':5000/v2.0/tokens', ['Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], '200', 'POST', request)
        
         if not result :
             return False
-        return result['access']['token']['id']
+        return str(result['access']['token']['id'])
 
 
     def add_user(self,name, password,project):
@@ -51,9 +48,9 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
                 tenant_id = tenant['id']
 
         request = {"user": {"name": name , "password": password, "email" : name, "default_project_id": tenant_id }}
-        result = curl.curl(self.controller + ':5000/v3/users', \
+        result = curl(self.controller + ':5000/v3/users', \
                                       ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant) ,\
-                                       'Content-Type: application/json', 'Accept: application/json'], \
+                                       'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
                                       '201', 'POST', request)
         if not result :
             return False
@@ -70,7 +67,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         tenant_id = "" 
         for tenant in tenants :
             if tenant['name'] == project :
-                tenant_id = tenant['id']
+                tenant_id = str(tenant['id'])
 
         if tenant_id == "":
             print "There is not such project in open stack users!"
@@ -82,14 +79,14 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         user_id = ""
         for user in users :
             if username == user['name'] :
-                user_id = user['id']
+                user_id = str(user['id'])
         if user_id == "":
             print "There is not such user in open stack users!"
             return False
 
         print "userid=%s and project_id=%s member_role=%s" % (user_id, tenant_id, self.member_role_id)
-        result = curl.curl(self.controller + ':5000/v3/projects/' + tenant_id + '/users/' + user_id + '/roles/' + self.member_role_id , \
-                                      ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), 'Content-Type: application/json'], '204', 'PUT')
+        result = curl(self.controller + ':5000/v3/projects/' + str(tenant_id) + '/users/' + str(user_id) + '/roles/' + str(self.member_role_id) , \
+                                      ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), 'Content-Type: application/json','Access-Control-Allow-Origin: *'], '204', 'PUT')
 
         if not result :
             return False
@@ -105,12 +102,12 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         user_id = ""
         for user in users :
             if username == user['name'] :
-                user_id = user['id']
+                user_id = str(user['id'])
         if user_id == "":
             print "There is not such user in open stack users!"
             return False
         print "Remove User: name = %s id = %s " % (username, user_id) ; print; print ##TEST 
-        result = curl.curl(self.controller + ':5000/v3/users/' + user_id, \
+        result = curl(self.controller + ':5000/v3/users/' + user_id, \
                                           ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], \
                                           '204', 'DELETE')
         if not result:
@@ -121,7 +118,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
     def list_users(self):
 
-        result = curl.curl(self.controller + ':5000/v3/users', \
+        result = curl(self.controller + ':5000/v3/users', \
                               ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], \
                               '200', 'GET')
         if not result :
@@ -133,18 +130,21 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
     def __list_roles(self):
 
-        result = curl.curl(self.controller + ':5000/v3/roles', \
-                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], \
+        result = curl(self.controller + ':5000/v3/roles', \
+                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), 'Access-Control-Allow-Origin: *'], \
                               '200', 'GET')
         if not result :
             return False
         roles = result["roles"]
+        self.admin_role_id=" "; self.member_role_id=" "
         for role in roles :
             if role["name"] == "admin" : 
-                self.admin_role_id = role["id"]
+                self.admin_role_id = str(role["id"])
             if role["name"] == "_member_" : 
-                self.member_role_id = role["id"]
+                self.member_role_id = str(role["id"])
 
+        print "admin_role=%s member_role=%s" %(self.admin_role_id, self.member_role_id)
+        print "all roles:", roles
         return roles
 
 
@@ -152,9 +152,9 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
     def add_tenant(self, name, desc, ram, vcpu, instances):
 
         request = {"project": {"description": desc , "enabled": True , "name": name, "domain_id" : "default" }}
-        result = curl.curl(self.controller + ':5000/v3/projects', \
+        result = curl(self.controller + ':5000/v3/projects', \
                                       ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant) ,\
-                                       'Content-Type: application/json', 'Accept: application/json'], \
+                                       'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
                                       '201', 'POST', request)
         if not result :
             return False
@@ -173,9 +173,8 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         print "ADMIN TENANT ID IS: " , admin_tenant_id;  print; print#TEST
         
         request = {"quota_set": {"cores": vcpu , "instances": instances , "ram": ram }}
-        result = curl.curl(self.controller + ':8774/v2/' + admin_tenant_id + '/os-quota-sets/' + current_tenant_id, \
-                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant),'Content-Type: application/json', "Accept: application/json"], \
-                                      '200', 'PUT', request)
+        result = curl(self.controller + ':8774/v2/' + str(admin_tenant_id) + '/os-quota-sets/' + str(current_tenant_id), \
+                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant),'Content-Type: application/json', "Accept: application/json",'Access-Control-Allow-Origin: *'], '200', 'PUT', request)
         if not result :
             return False
         print "this quota is added: ";print result; print; print #TyEST
@@ -185,8 +184,8 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
     def __tenants_list(self):
 
-        result = curl.curl(self.controller + ':5000/v3/projects', \
-                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json"], \
+        result = curl(self.controller + ':5000/v3/projects', \
+                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], \
                               '200', 'GET')
         if not result :
             return False
@@ -214,9 +213,8 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         print "Remove Projects: name = %s id = %s" % (project_name, tenant_ids) ##TEST 
         for i in  tenant_ids :
             result = ""
-            result = curl.curl(self.controller + ':5000/v3/projects/' + tenant_ids.pop(), \
-                                          ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json"], \
-                                          '204', 'DELETE')
+            result = curl(self.controller + ':5000/v3/projects/' + str(tenant_ids.pop()), \
+                                          ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], '204', 'DELETE')
             if not result:
                 return False
 
@@ -252,7 +250,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
  
 
         print "header list is: ", header_list
-        result = curl.curl(self.controller + ':9292/v1/images', header_list, '201', 'POST')
+        result = curl(self.controller + ':9292/v1/images', header_list, '201', 'POST')
 
         if not result :
             return False

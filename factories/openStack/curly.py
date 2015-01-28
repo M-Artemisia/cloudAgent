@@ -12,6 +12,17 @@ import sys
 import pycurl, json
 from io import BytesIO
 
+
+app_path = os.path.dirname(__file__)
+sys.path.append(app_path)
+
+if app_path:
+    os.chdir(app_path)
+else:
+    app_path = os.getcwd()
+
+
+
 #USAGE:
 '''
 url= '10.1.48.25:5000/v3/projects'
@@ -81,7 +92,7 @@ def curl(url, headers_list, response_code, method, req = None):
         return False
 
     if response_code in headers.getvalue().splitlines()[0] :
-        if data.getvalue() is not None:
+        if not not data.getvalue() :
             return json.loads(data.getvalue())
         else :
             return True
