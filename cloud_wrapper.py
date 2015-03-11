@@ -47,12 +47,12 @@ class xass_wrapper:
         self.user = user_dict
 
         if not self._add_project(user_dict['project'], prj_desc, ram, cpu, instance_num) :
-            self.cleanup()
+            self.cleanup(user_dict)
             return False
 
         print "Creating user...."
         if not self._add_user(user_dict) :
-            self.cleanup()
+            self.cleanup(user_dict)
             return False
 
         if "demo" in user_dict['project'] :
@@ -105,27 +105,27 @@ class xass_wrapper:
         print "Creating Network for VPC....."
         if not self.adaptor.add_network(user_dict['name'], user_dict['pass'], user_dict['project'], False, int_net, int_subnet, network_address):
             print "Error in Adding Network"
-            self.cleanup()
+            self.cleanup(user_dict)
             return False
 
         print "Creating Router FOR VPC....."
         if not self.adaptor.add_router(user_dict['name'], user_dict['pass'], user_dict['project'], router, ext_net, int_subnet):
             print "Cant add router...."
-            self.cleanup()
+            self.cleanup(user_dict)
             return False
 
         if "demo" in user_dict['project'] :
             print "Creating a demo VPS on demo VPC .........."
             if not self.adaptor.install_server(user_dict['name'], user_dict['pass'], user_dict['project'] , server_name, ext_net, int_net, 'default', image, 'm1.tiny'):
                 print "Cant create instance.."
-                self.cleanup()
+                self.cleanup(user_dict)
                 return False
             return True
 
         print "Creating a demo VPS on VPC .........."
-        if not self.adaptor.install_server(user_dict['name'], user_dict['pass'], user_dict['project'] , server_name, ext_net, int_net, 'default', image):
+        if not self.adaptor.install_server(user_dict['name'], user_dict['pass'], user_dict['project'] , server_name, ext_net, int_net, 'default', image,  'm1.tiny'):
             print "Cant create instance.."
-            self.cleanup()
+            self.cleanup(user_dict)
             return False
     
         return True
@@ -136,8 +136,6 @@ class xass_wrapper:
         if not self.adaptor.add_user(user_dict['name'], user_dict['pass'], user_dict['project']) :
             print "Error Accured in Adding User ....... "
             return False
-
-        self.adaptor.add_user_role(user_dict['name'], user_dict['project'])
         return True
 
     def _add_project(self, project_name, description, ram, vcpu, instances):

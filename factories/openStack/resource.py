@@ -3,14 +3,17 @@
 #Date: 14-Nov-5
 
 #This module .....
+import os, sys, re
+from curlWrapper import curl
+import keystoneWrapper
 
 def _get_resource_id(self, resource_type, resource_name):
         
     def _resources_list(client_type, response_code):
         result = curl(self.controller + str(client_type), \
-                              ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], response_code, 'GET')
+                              ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username,self.password,self.tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], response_code, 'GET')
         if not result :
-                return False
+            return False
         return result
 
     resources = []
@@ -36,23 +39,23 @@ def _get_resource_id(self, resource_type, resource_name):
         resources = res['roles']
 
     elif resource_type == "FLAVOR":
-        #/v2/{tenant_id}/flavors
-        res = _resources_list(':8774/v2/' + self._get_resource_id("TENANT", 'admin') + '/flavors','200')
+            #/v2/{tenant_id}/flavors
+        res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", 'admin') + '/flavors','200')
         if not res:
             print "There is not any %s on Openstack!" %(resource_type)
             return False
         resources = res['flavors']
 
     elif resource_type == "IMAGE":
-        #/v2/{tenant_id}/images
-        res = _resources_list(':8774/v2/' + self._get_resource_id("TENANT", 'admin') + '/images','200')
+            #/v2/{tenant_id}/images
+        res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", 'admin') + '/images','200')
         if not res:
             print "There is not any %s on Openstack!" %(resource_type)
             return False
         resources = res['images']
     elif resource_type == "SERVER":
-        #/v2/{tenant_id}/servers
-        res = _resources_list(':8774/v2/' + self._get_resource_id("TENANT", 'DemoTest') + '/servers','200')
+            #/v2/{tenant_id}/servers
+        res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", 'DemoTest') + '/servers','200')
         if not res:
             print "There is not any %s on Openstack!" %(resource_type)
             return False
@@ -78,28 +81,27 @@ def _get_resource_id(self, resource_type, resource_name):
             print "There is not any %s on Openstack!" %(resource_type)
             return False
         resources = res['subnets']
-        
+
     elif resource_type == "ROUTER":
         res = _resources_list(':9696/v2.0/routers','200')
         if not res:
             print "There is not any %s on Openstack!" %(resource_type)
             return False
         resources = res['routers']
-        
+
     else:
         print "The %s resource is not supported..." %(resource_type)
         return False 
 
     resource_id = ""
     for resource in resources :
-        if resource_name in resource['name'] :
+        if resource_name == resource['name'] :
             resource_id = resource['id']
 
     if not resource_id :
         print "There is not resource %s with name %s on open stack!"  % (resource_type,resource_name)
         return False
- 
-    #print "The ID of the  resource %s, with name %s is  %s" % (str(resource_type),str(resource_name), str(resource_id)) ##TEST 
+    
     return str(resource_id)
 
 
