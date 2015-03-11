@@ -14,7 +14,6 @@ class cloudFactory():
     # Create based on class name:
     def factory(classType,params): #TODO: get variable number of params for diffrent constructor
         #return eval(type + "()")
-        print "i am in factory class"
         if classType == "openstackCli": return openstackCliAdaptor(params)
         
         if classType == "openstackRest": return openstackRestAdaptor.openstackRestAdaptor(params)

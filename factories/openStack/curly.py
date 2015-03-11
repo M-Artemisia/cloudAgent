@@ -7,7 +7,7 @@
 
 
 
-import os
+import os, atexit
 import sys
 import pycurl, json
 from io import BytesIO
@@ -48,7 +48,6 @@ def curl(url, headers_list, response_code, method, req = None):
     @rtype: boolean OR String
     @return: if every thing be ok, and the reponse had a body, it returns the body of the message, if it had not body, it returns True, and if an error occured it will print the Error message and return False
     """
-
     data = BytesIO()        
     headers = BytesIO()        
     curlObj = pycurl.Curl()
@@ -70,7 +69,7 @@ def curl(url, headers_list, response_code, method, req = None):
             curlObj.setopt(pycurl.POSTFIELDS,request)
     else :
         print "Unkonw http method....", method
-        return False
+        return {"error":"Unkonw http method"}
 
     """
     elif method == 'PATCH':
@@ -92,10 +91,18 @@ def curl(url, headers_list, response_code, method, req = None):
         return False
 
     if response_code in headers.getvalue().splitlines()[0] :
-        if not not data.getvalue() :
+        if data.getvalue() :#is not None OR is not False
             return json.loads(data.getvalue())
         else :
             return True
     else :
-        print "Error...", json.loads(data.getvalue())["error"]["message"]
+        print "Error..."
+        print "HEADERS: ",headers.getvalue()
+        print "DATA: ",data.getvalue()
+
+        if "error" in json.loads(data.getvalue()).keys() :
+            print json.loads(data.getvalue())["error"]["message"]
+        elif "Bad request" in json.loads(data.getvalue()).keys() :
+            print json.loads(data.getvalue())["badRequest"]["message"]
         return False
+
