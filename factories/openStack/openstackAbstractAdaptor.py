@@ -28,8 +28,8 @@ class openstackAbstractAdaptor(object):
     @abstractmethod
     def remove_user(self,username): pass
 
-    @abstractmethod
-    def list_users(self): pass
+#   @abstractmethod
+#    def list_users(self): pass
 
     @abstractmethod
     def add_tenant(self, name, desc, ram, vcpu, instances): pass
@@ -55,3 +55,4 @@ class openstackAbstractAdaptor(object):
     def get_vnc_url(self,instance): pass
 
     """
+    
