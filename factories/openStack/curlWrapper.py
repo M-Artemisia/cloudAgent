@@ -98,11 +98,12 @@ def curl(url, headers_list, response_code, method, req = None):
     else :
         print "Error..."
         print "HEADERS: ",headers.getvalue()
+        x=json.loads(data.getvalue())
         print "DATA: ",data.getvalue()
 
-        if "error" in json.loads(data.getvalue()).keys() :
-            print json.loads(data.getvalue())["error"]["message"]
-        elif "Bad request" in json.loads(data.getvalue()).keys() :
-            print json.loads(data.getvalue())["badRequest"]["message"]
+        if "error" in x.keys() :
+            print x["error"]["message"]
+        elif "Bad request" in x.keys() :
+            print x["badRequest"]["message"]
         return False
 

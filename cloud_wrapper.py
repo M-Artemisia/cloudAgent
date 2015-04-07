@@ -91,18 +91,8 @@ class xass_wrapper:
 
     def create_VPC(self, user_dict, image):
 
-        '''
-        This method creates a Virtual Private Cloud for a user, and run a demo instance for it.
-        @type user_dict: Dict 
-        @param user_dict: It has three keys which contains user info. 
-        The keys are 'name': user name; 'pass': The user password for entering to Xamin IAAS; 'project': The name of Project which has been assigned to the user
-        @type image: String 
-        @param image: The type of the image of the server. It can be 'linux' or 'windows' 
-        @type ip_range: String 
-        @param ip_range: this is a String which show network Address of the internal network of the project. Example: '192.168.10.0/24'
-        @rtype: Boolean
-        @return: False if there is any problem in creating the VPC, otherwise True will be returned. 
-        '''
+        print "CREATING Network FOR VPC....."
+        #self.adaptor.add_network(user_dict['name'], user_dict['pass'], user_dict['project'] ,False ,'xaas_int4','xaas_subnet')
 
         print "Creating VPC.........."
         if "linux" in image :
@@ -202,7 +192,6 @@ class xass_wrapper:
         file = open("config_1.ini", "r")
         print file.read()
         file.close()
-
         file = open("config_1.ini", "w")
         file.write(x)
         file.close()

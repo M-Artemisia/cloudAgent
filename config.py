@@ -1,4 +1,3 @@
-
 username ="USERNAME" 
 password = "PASSWORD"
 tenant = "TENANT NAME"
@@ -29,4 +28,3 @@ VPS_internal_network = "INTERNAL_NET"
 VPS_internal_subnet = "INTERNAL_SUBNET"
 VPS_router = "ROUTER"
 VPS_sec_group = "SECURITY_GROUP_FOR_VPS"
-

@@ -9,7 +9,6 @@
 
 import os, sys, re
 from openstackAbstractAdaptor import openstackAbstractAdaptor
-
 import resource
 import keystoneWrapper, neutronWrapper, computeWrapper, glanceWrapper
 
@@ -33,7 +32,24 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         if not self.admin_role_id or not self.member_role_id :
             print "It seems the Openstack has not correct roles for admin and _member_"
             return False
+        '''
+        print "***********************************TEST******************************"
+        print "ADAPTOR: ADD TENANT"
 
+        #user="Adaptor_demo_user"; passw="1"; prj="DemoTest"
+        user="xaas_for_startup"; passw="xaas_for_startup"; prj="XASS_FOR_STARTUP"
+
+        self.add_tenant(prj, "Demo Test in INIT Function", 102400, 1, 1)
+
+        print "ADAPTOR: ADD user"
+        self.add_user(user, passw, prj)
+
+        print "ADAPTOR: ADD role"
+        self.add_user_role(user, prj)
+
+        print "ADAPTOR: install image"
+        self.install_image(user ,passw, prj, "demo" )
+        '''
 
     def add_user(self,name, password,project):       
         return keystoneWrapper.add_user(self,name, password,project)
@@ -45,10 +61,9 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
     def add_tenant(self, name, desc, ram, vcpu, instances):
         return keystoneWrapper.add_tenant(self, name, desc, ram, vcpu, instances)
 
-
     def remove_tenant(self, project_name):
         return keystoneWrapper.remove_tenant(self, project_name)
-    
+
 
     def add_image(self, appliance_spec):
             return glanceWrapper. add_image(self, appliance_spec)
@@ -97,7 +112,6 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
             return False 
 
         return neutronWrapper.remove_router(self, user, password, project, router)
-
 
     def remove_network(self, user, password, project, network, subnet):
         neutronWrapper.remove_subnet(self, user, password, project, subnet)
