@@ -48,7 +48,6 @@ def curl(url, headers_list, response_code, method, req = None):
     @rtype: boolean OR String
     @return: if every thing be ok, and the reponse had a body, it returns the body of the message, if it had not body, it returns True, and if an error occured it will print the Error message and return False
     """
-
     data = BytesIO()        
     headers = BytesIO()        
     curlObj = pycurl.Curl()
@@ -97,5 +96,13 @@ def curl(url, headers_list, response_code, method, req = None):
         else :
             return True
     else :
-        print "Error...", json.loads(data.getvalue())["error"]["message"]
+        print "Error..."
+        print "HEADERS: ",headers.getvalue()
+        x=json.loads(data.getvalue())
+        print "DATA: ",data.getvalue()
+
+        if "error" in x.keys() :
+            print x["error"]["message"]
+        elif "Bad request" in x.keys() :
+            print x["badRequest"]["message"]
         return False
