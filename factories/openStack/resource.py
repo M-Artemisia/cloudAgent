@@ -7,11 +7,22 @@ import os, sys, re
 from curlWrapper import curl
 import keystoneWrapper
 
-def _get_resource_id(self, resource_type, resource_name):
+def _get_resource_id(self, resource_type, resource_name, username=None, password=None,tenant=None):
         
-    def _resources_list(client_type, response_code):
+    if username == None :
+        username=self.username
+        password=self.password
+        tenant=self.tenant
+
+
+    def _resources_list(client_type, response_code, username=None, password=None,tenant=None):
+
+        if username == None :
+            username=self.username
+            password=self.password
+            tenant=self.tenant
         result = curl(self.controller + str(client_type), \
-                              ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username,self.password,self.tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], response_code, 'GET')
+                              ['X-Auth-Token: ' + keystoneWrapper.get_token(self, username,password,tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], response_code, 'GET')
         if not result :
             return False
         return result
@@ -39,7 +50,6 @@ def _get_resource_id(self, resource_type, resource_name):
         resources = res['roles']
 
     elif resource_type == "FLAVOR":
-            #/v2/{tenant_id}/flavors
         res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", 'admin') + '/flavors','200')
         if not res:
             print "There is not any %s on Openstack!" %(resource_type)
@@ -53,9 +63,10 @@ def _get_resource_id(self, resource_type, resource_name):
             print "There is not any %s on Openstack!" %(resource_type)
             return False
         resources = res['images']
+
     elif resource_type == "SERVER":
             #/v2/{tenant_id}/servers
-        res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", 'DemoTest') + '/servers','200')
+        res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", tenant) + '/servers','200', username, password,tenant)
         if not res:
             print "There is not any %s on Openstack!" %(resource_type)
             return False

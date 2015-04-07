@@ -53,18 +53,34 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
     def add_image(self, appliance_spec):
             return glanceWrapper. add_image(self, appliance_spec)
  
-    def install_server(self, user, password, project, instance_name, external_ip_pool, internal_ip_pool, security_group = 'default', image='cirros-2', flavor='m1.small'):
+    def install_server(self, user, password, project, instance_name, external_ip_pool, internal_ip_pool, image_User, image_Pass, security_group = 'default', image='cirros-2', flavor='m1.small'):
         '''
         Assumptions: the xaas_for_startup for flavor & external network is assigned by default
         TODO: i use int as internal_network_NAME. we shpuld find the name of the internal net based on router:external element of the network API
         '''
-        return computeWrapper.install_server(self, user, password, project, instance_name, external_ip_pool, internal_ip_pool, security_group, image, flavor)
+        print "flavor in openstackRest is: ", flavor
+        return computeWrapper.install_server(self, user, password, project, instance_name, external_ip_pool, internal_ip_pool, image_User, image_Pass, security_group, image, flavor)
+
+
+    def remove_server(self, user, password, project, server):
+        return computeWrapper.remove_server(self, user, password, project, server)
+
+    def add_flavor(self, user, password, project, flavor, ram, vcpus, disk):
+        return computeWrapper.add_flavor(self, user, password, project, flavor, ram, vcpus, disk)
+
+    def remove_flavor(self, user, password, project,flavor):
+        return computeWrapper.remove_flavor(self, user, password, project, flavor)
+
 
     def add_network(self, user, password, project, external=False,network_name='xaas_int2', subent_name='xaas_subnet',network_address='192.168.10.0/24'):
         """
         Create a network & a subnet for a specific project 
         """
-        return neutronWrapper.add_network(self, user, password, project, external,network_name, subent_name,network_address)
+        network = neutronWrapper.add_network(self, user, password, project, external,network_name)
+        if not network:
+            return False
+        
+        return neutronWrapper.add_subnet(self, user, password, project, network['network']['id'] ,subent_name,network_address)
 
 
     def add_router(self, user, password, project, router_name, gateway='ext-net', internal_subnet='xaas_subnet'):
@@ -74,3 +90,16 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         """
         return neutronWrapper.add_router(self, user, password, project, router_name, gateway, internal_subnet)
 
+
+    def remove_router(self, user, password, project, router, subnet ):
+
+        if not neutronWrapper.remove_interface_from_router(self, user, password, project, router, subnet ):
+            return False 
+
+        return neutronWrapper.remove_router(self, user, password, project, router)
+
+
+    def remove_network(self, user, password, project, network, subnet):
+        neutronWrapper.remove_subnet(self, user, password, project, subnet)
+        return neutronWrapper.remove_network(self, user, password, project, network)
+        

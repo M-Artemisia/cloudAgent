@@ -29,7 +29,13 @@ def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
 
 def _assign_float_ip(self, user, password, project, external_ip_pool, server):
 
-    global resource 
+    import resource 
+    print 
+    print resource
+    print type(resource)
+    print
+
+
     tenant_id = resource._get_resource_id(self,"TENANT",project)
     if not tenant_id :
         print "cant find the project ",tenant_id 
@@ -72,7 +78,7 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
 
 
 
-def add_network(self, user, password, project, external=False,network_name='xaas_int2', subent_name='xaas_subnet',network_address='192.168.10.0/24'):
+def add_network(self, user, password, project, external=False,network_name='xaas_int2'):
     """
     Create a network & a subnet for a specific project 
     """
@@ -91,11 +97,14 @@ def add_network(self, user, password, project, external=False,network_name='xaas
     if not network :
         return False
 
-    #create_subnet
+    return network
+
+def add_subnet(self, user, password, project, network_id ,subent_name='xaas_subnet',network_address='192.168.10.0/24'):
+
     print "Creating SubNet..."
     request = {"subnet":{ \
             "name":subent_name,\
-                "network_id": network['network']['id'],\
+                "network_id": network_id ,\
                 "ip_version":4,\
                 "cidr": network_address}}
     subnet = curl(self.controller + ':9696/v2.0/subnets', \
@@ -105,8 +114,7 @@ def add_network(self, user, password, project, external=False,network_name='xaas
     if not subnet :
         return False
 
-    return True
-
+    return subnet
 
 def add_router(self, user, password, project, router_name, gateway='ext-net', internal_subnet='xaas_subnet'):
     """
@@ -155,16 +163,79 @@ def _add_interface_to_router(self, user, password, project, router_name, interna
 
 
 
-def remove_network(self, user, password, project, external=False,network_name='xaas_int2', subent_name='xaas_subnet',network_address='192.168.10.0/24'):
-    #Remove dcpAgent
-    #remove network:dhcp port, compute:None port, delete router, sunbet, net
-    return False
+def remove_network(self, user, password, project, network):
+
+    net_id = resource._get_resource_id(self,"NETWORK",network)
+    if not net_id :
+        return False
+
+    result = curl(self.controller + ':9696/v2.0/networks/'+ net_id, \
+                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username,self.password,self.tenant) ,\
+                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
+                      '204', 'DELETE')
+    if not result :
+        return False
+
+    print "Network is removed"
+    return result
+
+
+def remove_subnet(self, user, password, project, subnet):
+
+    subnet_id = resource._get_resource_id(self,"SUBNET",subnet)
+    if not subnet_id :
+        return False
+
+    print "user pass and subnet in this project is: "
+    result = curl(self.controller + ':9696/v2.0/subnets/'+ subnet_id, \
+                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username,self.password,self.tenant) ,\
+                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
+                      '204', 'DELETE')
+    if not result :
+        return False
+    print "subNetwork is removed"
+    return result
+
+
+
+def remove_router(self, user, password, project, router):
+    print "Testing Remove Router Function "
+
+    router_id = resource._get_resource_id(self,"ROUTER",router)
+    if not router_id :
+        return False
+
+    result = curl(self.controller + ':9696/v2.0/routers/'+ router_id, \
+                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username,self.password,self.tenant) ,\
+                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
+                      '204', 'DELETE')
+    if not result :
+        return False
+    print "Router is removed"
+    return result
+
+
+def remove_interface_from_router(self, user, password, project, router, subnet ):
+    print "Testing Remove Interface from Router Function "
+
+    router_id = resource._get_resource_id(self,"ROUTER",router)
+    if not router_id :
+        return False
+
+    subnet_id = resource._get_resource_id(self,"SUBNET",subnet)
+    if not subnet_id :
+        return False
+
+    request = {"subnet_id": subnet_id}
+    result = curl(self.controller + ':9696/v2.0/routers/'+ router_id + '/remove_router_interface', \
+                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username,self.password,self.tenant) ,\
+                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
+                      '200', 'PUT', request)
+    if not result :
+        return False
+    print "subnet is Removed from router"
+    return result
 
 
 
 
-def remove_router(self, user, password, project, router_name, gateway='ext-net', internal_subnet='xaas_subnet'):
-    return False
-
-def _remove_interface_from_router(self, user, password, project, router_name, internal_subnet ):
-    return False

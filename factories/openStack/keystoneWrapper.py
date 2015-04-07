@@ -17,7 +17,12 @@ def get_token(self,username,password,tenant  ):
 
     request = {"auth": {"tenantName": tenant  , "passwordCredentials": {"username": username  , "password": password }}}
     result = curl(self.controller + ':5000/v2.0/tokens', ['Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], '200', 'POST', request)
-
+    if not result:
+        print "KEYSTONE:   ************************************************************************************"
+        print "request: ", request
+        print "CurL:"+self.controller + ':5000/v2.0/tokens   ' + 'Content-Type: application/json    ' + 'Accept: application/json    ' + 'Access-Control-Allow-Origin: *    ' + '200'+ '   POST'
+        print "Result: ", result
+        return False
     return str(result['access']['token']['id'])
 
 
