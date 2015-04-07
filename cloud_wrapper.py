@@ -61,75 +61,25 @@ class xass_wrapper:
                 print 'Time for Deletion is %s ' % config.demo_user_time
                 time.sleep(config.demo_user_time)
                 print; print "Im Removing Demo User & Project....................."
-                #self.cleanup(user_dict)
                 self._remove_project(user_dict['project'])
                 self._remove_user(user_dict['name'])
                 os._exit(0)  
                 
         return True
 
-    def create_vpc(self, user_dict, image, ip_range):
+    def create_vpc(self, user_dict): #Virtual Private Cloud
+        print "CREATING USER FOR VPC....."
+        #self.create_user(user_dict)
 
-        '''
-        This method creates a Virtual Private Cloud for a user, and run a demo instance for it.
-        @type user_dict: Dict 
-        @param user_dict: It has three keys which contains user info. 
-        The keys are 'name': user name; 'pass': The user password for entering to Xamin IAAS; 'project': The name of Project which has been assigned to the user
-        @type image: String 
-        @param image: The type of the image of the server. It can be 'linux' or 'windows' 
-        @type ip_range: String 
-        @param ip_range: this is a String which show network Address of the internal network of the project. Example: '192.168.10.0/24'
-        @rtype: Boolean
-        @return: False if there is any problem in creating the VPC, otherwise True will be returned. 
-        '''
+        print "CREATING Network FOR VPC....."
+        #self.adaptor.add_network(user_dict['name'], user_dict['pass'], user_dict['project'] ,False ,'xaas_int4','xaas_subnet')
 
-        print "Creating VPC.........."
-        
-        if not self.create_user(user_dict):
-            return False
-        
-        if "linux" in image :
-            image = 'cirros-2'
-        else:
-            image =  'windows'
-        
-        ext_net='ext'
+        print "CREATING Router FOR VPC....."
+        #self.adaptor.add_router(user_dict['name'], user_dict['pass'], user_dict['project'], 'xaas_router1','ext-net','xaas_subnet')
 
-        network_address = ip_range        
-        int_net = 'xaas_int'+ time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-        int_subnet = 'xaas_subnet'+ time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-        router = 'xaas_router'+time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-        server_name = 'Demo'
-        self.server={'int_net':int_net, 'subnet':int_subnet, 'router': router, 'server': server_name}
-
-        print "Creating Network for VPC....."
-        if not self.adaptor.add_network(user_dict['name'], user_dict['pass'], user_dict['project'], False, int_net, int_subnet, network_address):
-            print "Error in Adding Network"
-            self.cleanup()
-            return False
-
-        print "Creating Router FOR VPC....."
-        if not self.adaptor.add_router(user_dict['name'], user_dict['pass'], user_dict['project'], router, ext_net, int_subnet):
-            print "Cant add router...."
-            self.cleanup()
-            return False
-
-        if "demo" in user_dict['project'] :
-            print "Creating a demo VPS on demo VPC .........."
-            if not self.adaptor.install_server(user_dict['name'], user_dict['pass'], user_dict['project'] , server_name, ext_net, int_net, 'default', image, 'm1.tiny'):
-                print "Cant create instance.."
-                self.cleanup()
-                return False
-            return True
-
-        print "Creating a demo VPS on VPC .........."
-        if not self.adaptor.install_server(user_dict['name'], user_dict['pass'], user_dict['project'] , server_name, ext_net, int_net, 'default', image):
-            print "Cant create instance.."
-            self.cleanup()
-            return False
+        self.adaptor.install_image(user_dict['name'], user_dict['pass'], user_dict['project'] , "demo", 'ext-net', 'xaas_int4')
     
         return True
-
 
     #*************************************PRIVATE FUNCTIONS**************************
     def _add_user(self, user_dict):
@@ -137,6 +87,7 @@ class xass_wrapper:
             print "Error Accured in Adding User ....... "
             return False
 
+        print "Adding role...."
         self.adaptor.add_user_role(user_dict['name'], user_dict['project'])
         return True
 
@@ -163,44 +114,9 @@ class xass_wrapper:
         print "user %s is deleted!" % user_name
         return True 
 
-    '''
-    def cleanup(self):
-        print "Cleaning Environment...."
-        if bool(self.user) :
-            print "cleaning user......"
-            self._remove_project(self.user['project'])
-            self._remove_user(self.user['name'])
-        if bool(self.server) :
-            print "cleaning Server "
-            self._remove_server(self.server[ 'server'])
-            self._remove_router(self.server['router'])
-            self._remove_net(self.server['int_net'])
-    '''
+user="asemani"
+password= "123"
+prj="VPC_XAAS"
 
-    def cleanup(self,user):
-        print "Cleaning Environment...."
-        if bool(user) :
-            print "cleaning user......"
-            self._remove_project(user['project'])
-            self._remove_user(user['name'])
-        '''
-        if bool(self.server) :
-            print "cleaning Server "
-            self._remove_server(self.server[ 'server'])
-            self._remove_router(self.server['router'])
-            self._remove_net(self.server['int_net'])
-        '''
-
-
-    def _remove_server(self, server):
-        print "Removing Server will be implemented in the next version..."
-        return 
-
-    def _remove_router(self, router):
-        print "Removing Router will be implemented in the next version..."
-        return 
-
-    def _remove_net(self, int_net):
-        print "Removing Network will be implemented in the next version..."
-        return 
-
+wrapper = xass_wrapper()
+wrapper.create_vpc({"name":user, "pass": password, "project": prj})

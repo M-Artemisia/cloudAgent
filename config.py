@@ -1,8 +1,8 @@
 
 username ="admin" 
-password = "os-xam1n@ir"
+password = "admin"
 tenant = "admin"
-controller = "http://172.20.70.52"
+controller = "http://10.1.48.242"
 
 """
 username = "admin"
@@ -10,4 +10,4 @@ password = "xamin"
 tenant = "admin"
 controller = "http://10.1.48.25"
 """
-demo_user_time = 3000
+demo_user_time = 60000

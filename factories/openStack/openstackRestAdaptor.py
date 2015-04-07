@@ -11,7 +11,6 @@ import os, sys, re
 from curly import curl
 from openstackAbstractAdaptor import openstackAbstractAdaptor
 import resource_info
-from time import sleep
 
 class openstackRestAdaptor(openstackAbstractAdaptor):
     """
@@ -29,17 +28,36 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
         self.admin_role_id= self._get_resource_id("TENANT",'admin')
         self.member_role_id= self._get_resource_id("ROLE","_member_")
-
-        if not self.admin_role_id or not self.member_role_id :
+        ''''
+        if self.admin_role_id or self.member_role_id is False :
             print "It seems the Openstack has not correct roles for admin and _member_"
             return False
+        '''
+        print "***********************************TEST******************************"
+        print "ADAPTOR: ADD TENANT"
+        '''
+        #user="Adaptor_demo_user"; passw="1"; prj="DemoTest"
+        user="xaas_for_startup"; passw="xaas_for_startup"; prj="XASS_FOR_STARTUP"
 
+        self.add_tenant(prj, "Demo Test in INIT Function", 102400, 1, 1)
+
+        print "ADAPTOR: ADD user"
+        self.add_user(user, passw, prj)
+
+        print "ADAPTOR: ADD role"
+        self.add_user_role(user, prj)
+
+        print "ADAPTOR: install image"
+        self.install_image(user ,passw, prj, "demo" )
+        '''
 
     def get_token(self,username,password,tenant  ):
 
         request = {"auth": {"tenantName": tenant  , "passwordCredentials": {"username": username  , "password": password }}}
         result = curl(self.controller + ':5000/v2.0/tokens', ['Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], '200', 'POST', request)
 
+        if not result :
+            return False
         return str(result['access']['token']['id'])
 
 
@@ -55,6 +73,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
                                       '201', 'POST', request)
         if not result :
             return False
+        print "the added user is: "; print result #TEST
         return result 
 
 
@@ -64,28 +83,34 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         if not tenant_id :
             return False
 
+        print "add user role.......", username, project
+
         user_id = self._get_resource_id("USER",username)
         if not user_id :
             return False
 
+        print "userid=%s and project_id=%s member_role=%s" % (user_id, tenant_id, self.admin_role_id)
         result = curl(self.controller + ':5000/v3/projects/' + str(tenant_id) + '/users/' + str(user_id) + '/roles/' + str(self.member_role_id) , \
                                       ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), 'Content-Type: application/json','Access-Control-Allow-Origin: *'], '204', 'PUT')
 
         if not result :
             return False
+        print "the role is added to  user ", username; print result; print; print #TEST
         return result 
+
 
     def remove_user(self,username):
 
         user_id = self._get_resource_id("USER",username)
         if not user_id:
             return False
-
+        print "Removing User: name = %s id = %s " % (username, user_id) ; print; print ##TEST 
         result = curl(self.controller + ':5000/v3/users/' + user_id, \
                                           ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant)], \
                                           '204', 'DELETE')
         if not result:
             return False
+
         return result
 
 
@@ -99,10 +124,12 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
                                       '201', 'POST', request)
         if not result :
             return False
+        print "this tenant is added: "; print result; print; print #TEST
 
         #*******ADDING QUOTA******
-        current_tenant_id = result['project']['id'];
-        admin_tenant_id = self._get_resource_id("TENANT","admin");
+        current_tenant_id = result['project']['id']; print "CURRENt TENAT ID IS: " , current_tenant_id #TEST
+        admin_tenant_id = self._get_resource_id("TENANT","admin"); print "ADMIN TENANT ID IS: " , admin_tenant_id;  print; print#TEST
+        
         
         request = {"quota_set": {"cores": vcpu , "instances": instances , "ram": ram }}
         result = curl(self.controller + ':8774/v2/' + str(admin_tenant_id) + '/os-quota-sets/' + str(current_tenant_id), \
@@ -127,6 +154,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
                                           ['X-Auth-Token: ' + self.get_token(self.username,self.password,self.tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], '204', 'DELETE')
         if not result:
             return False
+
         return result
     
 
@@ -164,52 +192,39 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         return {"image_id": image_id}
 
 
-    def install_server(self, user, password, project, instance_name, external_ip_pool, internal_ip_pool, security_group = 'default', image='cirros-2', flavor='m1.small'):
+    def install_image(self, user, password, project, instance_name, external_ip_pool, internal_ip_pool, security_group = 'default', image='cirros', flavor='m1.small'):
         '''
         Assumptions: the xaas_for_startup for flavor & external network is assigned by default
         TODO: i use int as internal_network_NAME. we shpuld find the name of the internal net based on router:external element of the network API
         '''
-        print "STEP 1"
         internal_net_id = self._get_resource_id("NETWORK",internal_ip_pool)
         image_id = self._get_resource_id("IMAGE",image)
         flavor_id = self._get_resource_id("FLAVOR",flavor)
-        print "STEP 2"
 
-        if not internal_net_id or not image_id or not flavor_id :
-             print "internal_net_id=%s, image_id=%s, flavor_id=%s" %(internal_net_id, image_id, flavor_id)
-             return False
 
+        print "net=%s image=%s flavor=%s" %(internal_net_id,image_id, flavor_id)
         request = {"server":{ \
            "name": instance_name,\
            "imageRef": image_id,\
            "flavorRef": flavor_id,\
            "networks": [{"uuid": internal_net_id }],\
            "security_groups": [{"name": security_group}]}}
-        print "STEP 3"
 
         result = curl(self.controller + ':8774/v2/' + self._get_resource_id("TENANT",project) + '/servers', \
                                       ['X-Auth-Token: ' + self.get_token( user, password, project ) ,\
                                        'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
                                       '202', 'POST', request)
-        print "STEP 4"
         if not result :
-            print "install server result is false"
             return False
 
-        print "STEP 5"
-
+        print "image install result is ", result 
+        print; print 
         float_ip = self._generate_new_float_ip(user, password, project, external_ip_pool) 
-        print "STEP 6"
-
         if not self._assign_float_ip(user, password, project, float_ip, instance_name) :
-            print "STEP 7"
             False
-
-        print "STEP 7"
 
         octets = re.split('(.*)\.(.*)\.(.*)\.(.*)', float_ip)
         print "the image is installed. its invalid_ip: %s and the valid_ip: 217.218.62.%s" %(float_ip, str(octets[4:5].pop())); print; print #TEST
-        print "STEP 9"
 
         return "217.218.62.%s",str(octets[4:5].pop())
 
@@ -235,7 +250,6 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
         tenant_id = self._get_resource_id("TENANT",project)
         if not tenant_id :
-            print "cant find the project ",tenant_id 
             return False
 
         #server_id = self._get_resource_id("SERVER",server)
@@ -245,7 +259,6 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         request = {"addFloatingIp": {"address": float_ip}} 
 
         #/v2/{tenant_id}/servers
-        sleep(5)
         res = curl(self.controller + str(':8774/v2/' + tenant_id + '/servers'), \
                       ['X-Auth-Token: ' + self.get_token(user, password, project), "Accept: application/json",'Access-Control-Allow-Origin: *'], '200', 'GET')
            
@@ -269,13 +282,14 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         y= 'X-Auth-Token: ' + self.get_token(user, password, project)+' Content-Type: application/json ', 'Accept: application/json '+'Access-Control-Allow-Origin: *';
         #print "THE CURL IS: ...................."
         #print x;print y; print request
-        result = curl(self.controller + str(':8774/v2/' + tenant_id + '/servers/' + server_id +'/action'), \
+        result = curl(self.controller + ':8774/v2/' + tenant_id + '/servers/' + server_id +'/action', \
                                       ['X-Auth-Token: ' + self.get_token(user, password, project) ,\
                                        'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'202', 'POST', request)
         #  -H "X-Auth-Project-Id: demo" -H "User-Agent: python-novaclient"
         if not result :
             print "ERROR.................."
             return False
+        #print "the result of adding instance is: "; print result; print; print #TEST
         return result 
 
 
@@ -285,6 +299,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         """
         Create a network & a subnet for a specific project 
         """
+        print "Creating Net..."
         tenant_id = self._get_resource_id("TENANT", project);
         if not tenant_id :
             return False
@@ -327,7 +342,6 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         gateway_id = self._get_resource_id("NETWORK", gateway);
         subnet_id=self._get_resource_id("SUBNET", internal_subnet)
         if not gateway_id or not subnet_id :
-            print "cant find gateway=%s or subnet=%s" %(gateway_id,subnet_id)
             return False
 
         print "Creating Router...gateway=%s subnet=%s" %(gateway_id, subnet_id)
@@ -345,12 +359,13 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
             
         #ADD Interface
         self. _add_interface_to_router(user, password, project, router_name,internal_subnet)
-        return True
+        return
 
     def _add_interface_to_router(self, user, password, project, router_name, internal_subnet ):
-        print "Adding inetrface... "
+        print "Addinf inetrface... "
         router_id = self._get_resource_id("ROUTER", router_name);
-        subnet_id = self._get_resource_id("SUBNET", internal_subnet)
+        subnet_id=self._get_resource_id("SUBNET", internal_subnet)
+
         request = {"subnet_id": subnet_id }
         interface = curl(self.controller + ':9696/v2.0/routers/'+ router_id + "/add_router_interface", \
                                       ['X-Auth-Token: ' + self.get_token( user, password, project ) ,\
@@ -359,7 +374,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         if not interface :
             return False
             
-        return True
+        return
 
     #************************GET RESOURCED ID**************************
     #TODO: Get Any Info That the User Need IT
@@ -451,13 +466,15 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
         resource_id = ""
         for resource in resources :
-            if resource_name == resource['name'] :
+            if resource_name in resource['name'] :
                 resource_id = resource['id']
 
         if not resource_id :
             print "There is not resource %s with name %s on open stack!"  % (resource_type,resource_name)
             return False
-
+ 
+        #print "The ID of the  resource %s, with name %s is  %s" % (str(resource_type),str(resource_name), str(resource_id)) ##TEST 
+>>>>>>> a48bb96ef7826957c1f5ea7a120b8e04a0dff3d2
         return str(resource_id)
 
 
