@@ -90,11 +90,12 @@ def remove_server(self, user, password, project, server):
 
     request = '{"force_delete": null}'
     
+    '''
     result = curl(self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id, \
                       ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
                            'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
                       '204', 'DELETE')
-
+    '''
     print " ************************************************* "
     print self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id +'HEADERS: X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username, self.password, self.tenant) + '  -H Content-Type: application/json'+'  -H Accept: application/json   '+'  -H Access-Control-Allow-Origin: *'+'  204', '  DELETE'
     '''
@@ -106,7 +107,7 @@ def remove_server(self, user, password, project, server):
     print "STEP 3: result is ", result 
     if not result :
         return False
-    print "flavor is removed"
+    print "server is removed"
     return result
 
 
