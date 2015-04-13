@@ -62,10 +62,11 @@ class xass_wrapper:
         print "Creating Project....."
         if "demo" in user_dict['project'] :
             prj_desc="This is a %s project for user %s " %("Demo",user_dict['name'])
-            ram=51200;cpu=1;instance_num=1
+            #ram=512;cpu=1;instance_num=1
+            ram=2048;cpu=1;instance_num=1
         else:
             prj_desc="This is a %s project for user %s " %("Paid",user_dict['name'])
-            ram=102400;cpu=1;instance_num=1
+            ram=10240;cpu=100;instance_num=40
 
         user_dict['project'] = user_dict['project']+ time.strftime("%Y%m%d_%H%M%S", time.gmtime()) #+'_VPC' 
         self.user = user_dict
@@ -102,9 +103,9 @@ class xass_wrapper:
         
         network_address = self._get_internal_net_add()
 
-        int_net = 'xaas_int'+ time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-        int_subnet = 'xaas_subnet'+ time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-        router = 'xaas_router'+time.strftime("%Y%m%d_%H%M%S", time.gmtime())
+        int_net = 'xaas_vpc_int_'+ time.strftime("%Y%m%d_%H%M%S", time.gmtime())
+        int_subnet = 'xaas_vpc_subnet_'+ time.strftime("%Y%m%d_%H%M%S", time.gmtime())
+        router = 'xaas_vpc_router_'+time.strftime("%Y%m%d_%H%M%S", time.gmtime())
 
         server_name = 'Demo'
         server={'net':int_net, 'subnet':int_subnet, 'router': router, 'server': server_name}
@@ -128,12 +129,13 @@ class xass_wrapper:
 
         print "Creating a demo VPS on VPC .........."
         print "flavor in config file is: ", self.VPC_flavor_name 
-        if not self.adaptor.install_server(user_dict['name'], user_dict['pass'], user_dict['project'] , server_name, self.VPC_external_network, int_net, self.Default_Image_User, self.Default_Image_Pass, self.VPC_sec_group, image, self.VPC_flavor_name):
-
+        ip = self.adaptor.install_server(user_dict['name'], user_dict['pass'], user_dict['project'] , server_name, self.VPC_external_network, int_net, self.Default_Image_User, self.Default_Image_Pass, self.VPC_sec_group, image, self.VPC_flavor_name)
+        if not ip :
             print "Cant create instance.."
             self.cleanup(user_dict,server)
             return False
-    
+    	else: 
+	    print "Valid_ip in cloud wrapper is: ", ip 
         return True
 
 
@@ -153,13 +155,14 @@ class xass_wrapper:
         print "Creating a demo VPS .........."
         server = "VPS_"+time.strftime("%Y%m%d_%H%M%S", time.gmtime())
         
-        if not self.adaptor.install_server(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name , server, self.VPS_external_network, self.VPS_internal_network, self.Default_Image_User, self.Default_Image_Pass, self.VPS_sec_group , image, flavor):
+        ip = self.adaptor.install_server(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name , server, self.VPS_external_network, self.VPS_internal_network, self.Default_Image_User, self.Default_Image_Pass, self.VPS_sec_group , image, flavor)
+        if not ip :
             print "Cant create instance.."
             self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
             return False
         print "I am removing flavor..............."
         self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
-        return True
+        return ip
     
 
 
@@ -187,26 +190,17 @@ class xass_wrapper:
         file.close()
         print "first line in function: _3rd_crnt is: ", self.VPC_int_3rd_oct_crnt
 
-        ''''
-        x=4
-        file = open("config_1.ini", "r")
-        print file.read()
-        file.close()
-        file = open("config_1.ini", "w")
-        file.write(x)
-        file.close()
-        '''
-
         octets = re.split('(.*)\.(.*)\.(.*)\.(.*)', self.VPC_int_net_From)
         first_octet = octets[1:2].pop()
         second_octet = octets[2:3].pop() 
         third_octet = octets[3:4].pop() 
+	print "third_octet is ",third_octet
         
-        if self.VPC_int_3rd_oct_crnt <= int(third_octet) :
+        if int(self.VPC_int_3rd_oct_crnt) < int(third_octet) :
             self.VPC_int_3rd_oct_crnt = int(third_octet)
         else :
             self.VPC_int_3rd_oct_crnt = int(self.VPC_int_3rd_oct_crnt) + 1
-            if self.VPC_int_3rd_oct_crnt >= int(re.split('(.*)\.(.*)\.(.*)\.(.*)', self.VPC_int_net_To)[3:4].pop()) :
+            if int(self.VPC_int_3rd_oct_crnt) >= int(re.split('(.*)\.(.*)\.(.*)\.(.*)', self.VPC_int_net_To)[3:4].pop()) :
                 self.VPC_int_3rd_oct_crnt = int(third_octet)
         
         network_address = first_octet + '.' + second_octet + '.' + str(self.VPC_int_3rd_oct_crnt) + '.0/' + self.VPC_int_net_Range

@@ -11,7 +11,7 @@ import os, sys, re, time
 from curlWrapper import curl
 import resource
 import keystoneWrapper, neutronWrapper
-
+from time import sleep
 
 def install_server(self, user, password, project, instance_name, external_ip_pool, internal_ip_pool,server_user, server_pass, security_group = 'default', image='cirros-2', flavor='m1.small'):
     '''
@@ -55,7 +55,7 @@ def install_server(self, user, password, project, instance_name, external_ip_poo
         return False
 
     print "STEP 5"
-
+    #sleep(10)
     network = neutronWrapper._assign_float_ip(self, user, password, project, external_ip_pool, instance_name)
     if not network:
         print "STEP 6"
@@ -67,7 +67,7 @@ def install_server(self, user, password, project, instance_name, external_ip_poo
     print "the image is installed. its invalid_ip: %s and the valid_ip: 217.218.62.%s" %(network, str(octets[4:5].pop())); print; print #TEST
     print "STEP 7"
 
-    return "217.218.62.%s",str(octets[4:5].pop())
+    return "217.218.62."+str(octets[4:5].pop())
 
 
 def remove_server(self, user, password, project, server):
@@ -90,14 +90,14 @@ def remove_server(self, user, password, project, server):
 
     request = '{"force_delete": null}'
     
-    '''
+    
     result = curl(self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id, \
                       ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
                            'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
                       '204', 'DELETE')
-    '''
+    
     print " ************************************************* "
-    print self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id +'HEADERS: X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username, self.password, self.tenant) + '  -H Content-Type: application/json'+'  -H Accept: application/json   '+'  -H Access-Control-Allow-Origin: *'+'  204', '  DELETE'
+    #print self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id +'HEADERS: X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username, self.password, self.tenant) + '  -H Content-Type: application/json'+'  -H Accept: application/json   '+'  -H Access-Control-Allow-Origin: *'+'  204', '  DELETE'
     '''
     result = curl(self.controller + ':8774/v2.1/servers/' + server_id+'/action', \
                       ['X-Auth-Token: ' + keystoneWrapper.get_token(self,self.username, self.password, self.tenant) ,\
