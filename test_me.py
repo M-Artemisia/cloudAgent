@@ -1,4 +1,4 @@
-from xCloudAgent.cloud_wrapper import xass_wrapper
+from cloud_wrapper import xass_wrapper
 
 
 user="asemani_demo_1"
@@ -9,6 +9,8 @@ wrapper = xass_wrapper()
 
 
 print wrapper.create_VPC({"name":user, "pass": password, "project": prj},'linux')
+
+
 '''
 int_net = 'xaas_int'+'_VPC'
 int_subnet = 'xaas_subnet'+'_VPC'
@@ -19,15 +21,13 @@ server={'net':int_net, 'subnet':int_subnet, 'router': router, 'server': server_n
 print wrapper.cleanup({"name":user, "pass": password, "project": prj+'_VPC'}, server)
 '''
 #create_VPS(self, image, ram-M, vcpus, disk-G)
-#print wrapper.create_VPS('linux', 3000, 1, 10)
-
-user2="asemani_demo_2"
-
-print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
+print wrapper.create_VPS('linux', 3000, 1, 10)
 
 
 
 
+#user2="asemani_demo_2"
+#print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
 #print wrapper.create_vpc({"name":user, "pass": password, "project": prj},'linux','192.168.83.0/24')
 
 '''
