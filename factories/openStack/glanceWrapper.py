@@ -43,5 +43,3 @@ def add_image(self, appliance_spec):
         return False
     image_id = result['image']['id']
     return {"image_id": image_id}
-
-

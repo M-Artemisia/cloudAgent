@@ -226,6 +226,7 @@ def remove_interface_from_router(self, user, password, project, router, subnet )
     if not subnet_id :
         return False
 
+    #Removes an internal interface from a logical router
     request = {"subnet_id": subnet_id}
     result = curl(self.controller + ':9696/v2.0/routers/'+ router_id + '/remove_router_interface', \
                       ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username,self.password,self.tenant) ,\

@@ -86,6 +86,30 @@ def remove_server(self, user, password, project, server):
     if not server_id :
         return False
 
+    #Added by Jabbari to get float_ip associated with the server
+    #The code works when there is only one floating_ip in the tenant. 
+    #In demo, the server and the ip associated to it, are created in their tenant. so it's ok to just retrun the first entry of the curl result :)
+    print "STEP 1.5: getting the float ip id"
+    #float_ip_id = resource._get_floatip_id(self,"FLOATIP", tenant_id, user, password, project)
+    float_ip_id = ""
+    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', \
+                          ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
+                               'Accept: application/json', 'Access-Control-Allow-Origin: *'], '200', 'GET')
+    if not result:
+	print "No floating ip found for the tenant_id"
+    else:
+    	print "floating_ips for the tenant : ", result
+        try:
+	    float_ip_id = result['floating_ips']['id']
+    	    #if not float_ip_id:
+ 	    #    print "--Cannot find the id for Float IP associated to the server! So the float Ip would not be deallocated"
+	    #else:
+            #    print float_ip_id
+        
+	    print float_ip_id
+	except:
+	    print "what's wrong with you akhe?"
+
     print "STEP 2: server_id is ", server_id
 
     request = '{"force_delete": null}'
@@ -98,19 +122,28 @@ def remove_server(self, user, password, project, server):
     
     print " ************************************************* "
     #print self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id +'HEADERS: X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username, self.password, self.tenant) + '  -H Content-Type: application/json'+'  -H Accept: application/json   '+'  -H Access-Control-Allow-Origin: *'+'  204', '  DELETE'
-    '''
-    result = curl(self.controller + ':8774/v2.1/servers/' + server_id+'/action', \
-                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self,self.username, self.password, self.tenant) ,\
-                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
-                      '202', 'POST',request)
-    '''
-    print "STEP 3: result is ", result 
+    
     if not result :
-        return False
+  	return False
     print "server is removed"
-    return result
+    
+    
+    if float_ip_id != "":
+    #if not float_ip_id:
+    	result = curl(self.controller + ':8774/v2.1/servers/' + server_id+'/action', \
+                      	['X-Auth-Token: ' + keystoneWrapper.get_token(self,self.username, self.password, self.tenant) ,\
+                           	'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
+                      	'202', 'POST',request)
+    
+    	print "STEP 3: result is ", result 
+    	if not result :
+	    print "--Cannot deallocate floating IP from the server!!--"
+            return False
+    	print "--------- deallocating float ip ------"
+    	return result
 
 
+    return result 
 
 def add_flavor(self, user, password, project, flavor_name, ram, vcpus, disk):
     #ram based on M, disk Based on G
