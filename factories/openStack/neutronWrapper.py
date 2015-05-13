@@ -14,9 +14,62 @@ from time import sleep
 import resource
 import keystoneWrapper
 
+#added by jabbari
+def list_float_ips(self, user, password, project, tenant_id):
+    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', \
+                      ['X-Auth-Token: '+ keystoneWrapper.get_token(self, user, password, project) , 'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'GET')
+    if not result :
+        return False
 
+    return result
+
+#Jabbari: The code Checks to see if there is any free allocated ip for the tenant. if yes returns it and if no, allocates a new one.
 def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
 
+    request = {"pool": pool}
+    float_ip_id = ""
+    associated = False
+    
+    try:
+    	result = list_float_ips(self, user, password, project, tenant_id)  #you cannot list ips when token does not match the project.
+    	#print "--list of floating ips for tenenat ",tenant_id
+    	#print result
+
+       	print "Trying to find free floating ips and associate one to the server"
+	
+    	for i in range(0, len(result['floating_ips'])):
+	    if associated:
+		break
+            if not result['floating_ips'][i]['fixed_ip']:
+            	id = result['floating_ips'][i]['id']
+		ip = result['floating_ips'][i]['ip']
+		print "fixed ip none for id ", id
+            	# first we should see the details (to ensure it's status id DOWN)
+            	#res = get_floating_ip_detail(tenant_id, id, token)
+            	#print str(res) 
+            	#Returns No more info that what we had before :(
+
+            	# We can associate the ip to the server
+                print "We are going to associate the ip ", ip
+    		return ip
+
+
+	#if not associated, allocate a new IP:
+	result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', \
+                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
+                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'POST', request)
+    	if not result :
+            return False
+
+    	return result['floating_ip']['ip']
+
+    except:
+	print "An exception occured in generating or associating float ip"
+	return False
+
+"""def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
+
+    
     request = {"pool": pool}
     result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', \
                       ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
@@ -25,7 +78,7 @@ def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
         return False
         
     return result['floating_ip']['ip']
-
+"""
 
 def _assign_float_ip(self, user, password, project, external_ip_pool, server):
 
