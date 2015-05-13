@@ -85,13 +85,12 @@ def remove_server(self, user, password, project, server):
     #server_id = resource._get_resource_id(self,"SERVER",server,project)
     if not server_id :
         return False
-    print "STEP 2: server_id is ", server_id
 
 
     #----- Added to get float_ip associated with the server
     #The code works when there is only one floating_ip in the tenant. 
     #In demo, the server and the ip associated to it, are created in their tenant. so it's ok to just retrun the first entry of the curl result :)
-    print "STEP 3: release float ip"
+    print "STEP 2: release float ip"
     #1_"getting the float ip id"
     #float_ip_id = resource._get_floatip_id(self,"FLOATIP", tenant_id, user, password, project)
     float_ip_id = ""
@@ -119,6 +118,7 @@ def remove_server(self, user, password, project, server):
     	    result = curl(self.controller + ':8774/v2/' + tenant_id + '/servers/' + str(server_id) +'/action', \
             	['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
                     'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], '202', 'POST',request)
+	    #deallocate_float_ip(self, user, password, project, tenant_id, id)
     	    if not result:
         	print "Cannot disassociate floating ip from the server"
     	    else:
@@ -126,20 +126,22 @@ def remove_server(self, user, password, project, server):
    	    
 
 	    #3_deallocating float ip - DO NOT USE ADMIN TOKEN! You can only deallocate ips allocated to a tenant using the token for that tenant!!
-            ipresult = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(float_ip_id) , \
+            """ipresult = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(float_ip_id) , \
                         ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
                                 'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
-                      	'202', 'DELETE')
+                      	'202', 'DELETE')"""
+	    ipresult = deallocate_float_ip(self, user, password, project, tenant_id, str(float_ip_id))
 	    print "ipresult (deallocate) : ", ipresult
 	    if not ipresult :
-                print "STEP 3: Cannot deallocate floating IP from the server!!--"
+                print "STEP 2: Cannot deallocate floating IP from the server!!--"
                 #return False #We don't retrun Flase here
             else :
-                print "STEP 3: Floating ip deallocated"
+                print "STEP 2: Floating ip deallocated"
         except:
-            print "STEP 3: Cannot deallocate floating IP from the server!!--"  # We Don't return false
+            print "STEP 2: Cannot deallocate floating IP from the server!!--"  # We Don't return false
      	    
 
+    print "STEP 3: server_id is ", server_id
 
     request = '{"force_delete": null}'    
     
@@ -154,25 +156,7 @@ def remove_server(self, user, password, project, server):
     if not result :
   	return False
     print "server is removed"
-
-
-    #if float_ip_id != "":
-    """if float_ip_id and not float_ip_id.isspace():
-        try:
-            ipresult = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(float_ip_id) , \
-                        ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
-                                'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
-                        '202', 'DELETE')
-            if not ipresult :
-                print "STEP 2: Cannot deallocate floating IP from the server!!--"
-                #return False #We don't retrun Flase here
-            else :
-                print "STEP 2: Floating ip deallocated"
-        except:
-            print "STEP 2: Cannot deallocate floating IP from the server!!--"  # We Don't return false
-    """
-
-    return result #Result for STEP 3
+    return result 
 
 
 def add_flavor(self, user, password, project, flavor_name, ram, vcpus, disk):
@@ -211,3 +195,29 @@ def remove_flavor(self, user, password, project,flavor):
         return False
     print "flavor is removed"
     return result
+
+
+#Added by jabbari -only ips for that project could be deallocated
+def deallocate_float_ip(self, user, password, project, tenant_id, id):
+    #print "id is ", id
+    #print "tenant id is ", tenant_id
+    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(id)  , \
+                ['X-Auth-Token: ' + keystoneWrapper.get_token( self, user, password, project ),\
+                        'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'202', 'DELETE')
+    if not result :
+        print "--deallocate False--"
+        return False
+
+    return True
+
+#added by jabbari
+def list_float_ips(self, user, password, project, tenant_id):
+    result = curl('10.1.48.242:8774/v2/' + tenant_id + '/os-floating-ips', \
+                      ['X-Auth-Token: '  + keystoneWrapper.get_token( self, user, password, project ) , 'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'GET')
+    if not result :
+        return False
+
+    return result
+
+
+

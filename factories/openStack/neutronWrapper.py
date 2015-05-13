@@ -12,16 +12,7 @@ from curlWrapper import curl
 from time import sleep
 
 import resource
-import keystoneWrapper
-
-#added by jabbari
-def list_float_ips(self, user, password, project, tenant_id):
-    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', \
-                      ['X-Auth-Token: '+ keystoneWrapper.get_token(self, user, password, project) , 'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'GET')
-    if not result :
-        return False
-
-    return result
+import keystoneWrapper, computeWrapper
 
 #Jabbari: The code Checks to see if there is any free allocated ip for the tenant. if yes returns it and if no, allocates a new one.
 def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
@@ -31,9 +22,9 @@ def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
     associated = False
     
     try:
-    	result = list_float_ips(self, user, password, project, tenant_id)  #you cannot list ips when token does not match the project.
+    	result = computeWrapper.list_float_ips(self, user, password, project, tenant_id)  #you cannot list ips when token does not match the project.
     	#print "--list of floating ips for tenenat ",tenant_id
-    	#print result
+    	print result
 
        	print "Trying to find free floating ips and associate one to the server"
 	
@@ -128,8 +119,6 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
         print "Neutron ERROR.................."
         return False
     return float_ip 
-
-
 
 def add_network(self, user, password, project, external=False,network_name='xaas_int2'):
     """
