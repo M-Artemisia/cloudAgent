@@ -46,8 +46,10 @@ def curl(url, headers_list, response_code, method, req = None):
     @type request: Dictionary
     @param request: a dictionary of resqest which will be convert to json and send to server.
     @rtype: boolean OR String
-    @return: if every thing be ok, and the reponse had a body, it returns the body of the message, if it had not body, it returns True, and if an error occured it will print the Error message and return False
+    @return: it retruns a dictionary of the form {"status": "error/success", "message": "errormessage/responsedataInJson/None"}, in case of errors, it prints the error
     """
+    #print "curl.."
+
     data = BytesIO()        
     headers = BytesIO()        
     curlObj = pycurl.Curl()
@@ -68,8 +70,8 @@ def curl(url, headers_list, response_code, method, req = None):
             curlObj.setopt(pycurl.POST,1)
             curlObj.setopt(pycurl.POSTFIELDS,request)
     else :
-        print "Unkonw http method....", method
-        return {"error":"Unkonw http method"}
+        print "Unkown http method....", method
+        return {"status":"error", "message":"Unkown http method"}
 
     """
     elif method == 'PATCH':
@@ -83,18 +85,26 @@ def curl(url, headers_list, response_code, method, req = None):
     try :
         curlObj.perform()
     except Exception as e:
-        print e
+        print "Excteption occured in curl : ",e
+	return {"status":"error", "message":"Excteption occured in curl"}
+	#return False
     curlObj.close()
+
         
     #status_code = curlObj.getinfo(pycurl.HTTP_CODE)    
     if headers.getvalue() is None :
-        return False
+	print "Error in curl: No value in header"
+	return {"status":"error", "message":"Header in response is None"}
+	#return False
+
 
     if response_code in headers.getvalue().splitlines()[0] :
         if data.getvalue() :#is not None OR is not False
-            return json.loads(data.getvalue())
+ 	    return {'status':'success', 'message':json.loads(data.getvalue())}
+            #return json.loads(data.getvalue())
         else :
-            return True
+            #return True
+	    return {'status':'success', 'message':None} #OR {'message':"Ok"} 
     else :
         print "Error..."
         print "HEADERS: ",headers.getvalue()
@@ -102,8 +112,13 @@ def curl(url, headers_list, response_code, method, req = None):
         print "DATA: ",data.getvalue()
 
         if "error" in x.keys() :
-            print x["error"]["message"]
-        elif "Bad request" in x.keys() :
-            print x["badRequest"]["message"]
-        return False
+            print "Error message : ", x["error"]["message"]
+	    return {'status':'error' ,'message': x["error"]["message"]}
+        #elif "Bad request" in x.keys() :
+        elif "badRequest" in x.keys() :
+            print "Error message : ", x["badRequest"]["message"]
+	    return {'status': 'error', 'message': x["badRequest"]["message"]}
 
+        #return False
+
+    print " "
