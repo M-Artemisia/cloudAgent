@@ -25,9 +25,14 @@ user2="asemani_demo_2"
 
 print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
 
+appliance_spec['url']='http://10.1.48.9/appliances/xgiSlave-jcloud-940205.qcow2'
+appliance_spec['name']='xgiSlave-jcloud-940205'
+appliance_spec["installed_size"]='40'
+appliance_spec["memory"]='2'
+appliance_spec["storage"]='40'
 
-
-
+print wrapper.create_Image({"url":appliance_spec['url'], "name": appliance_spec['name'], \
+	"installed_size":appliance_spec["installed_size"], "memory":appliance_spec["memory"], "storage": appliance_spec["storage"]})
 #print wrapper.create_vpc({"name":user, "pass": password, "project": prj},'linux','192.168.83.0/24')
 
 '''

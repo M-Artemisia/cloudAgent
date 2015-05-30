@@ -7,8 +7,11 @@ import os, sys, re
 from curlWrapper import curl
 import keystoneWrapper
 
+
 def _get_resource_id(self, resource_type, resource_name, username=None, password=None,tenant=None):
-        
+''' 
+returns: a dictionary of the form {"status": "error"/"success" , "message": "error-message"/"resource-id"}
+'''        
     if username == None :
         username=self.username
         password=self.password
@@ -23,86 +26,85 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
             tenant=self.tenant
         result = curl(self.controller + str(client_type), \
                               ['X-Auth-Token: ' + keystoneWrapper.get_token(self, username,password,tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], response_code, 'GET')
-        if not result :
-            return False
         return result
 
     resources = []
+    
     if resource_type == "TENANT":            
         res = _resources_list(':5000/v3/projects', '200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res["projects"]
+            return res
+        resources = res['message']["projects"]
 
     elif resource_type == "USER":
         res = _resources_list(':5000/v3/users','200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['users']
+            return res
+        resources = res['message']['users']
         
     elif resource_type == "ROLE":
         res = _resources_list(':5000/v3/roles','200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['roles']
+            return res
+        resources = res['message']['roles']
 
     elif resource_type == "FLAVOR":
         res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", 'admin') + '/flavors','200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['flavors']
+            return res
+        resources = res['message']['flavors']
 
     elif resource_type == "IMAGE":
             #/v2/{tenant_id}/images
         res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", 'admin') + '/images','200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['images']
+            return res
+        resources = res['message']['images']
 
     elif resource_type == "SERVER":
             #/v2/{tenant_id}/servers
         res = _resources_list(':8774/v2/' + _get_resource_id(self,"TENANT", tenant) + '/servers','200', username, password,tenant)
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['servers']
+            return res
+        resources = res['message']['servers']
 
     elif resource_type == "NETWORK":
         res = _resources_list(':9696/v2.0/networks','200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['networks']
+            return res
+        resources = res['message']['networks']
 
     elif resource_type == "Network":
         res = _resources_list(':9696/v2.0/networks','200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['networks']
+            return res
+        resources = res['message']['networks']
 
     elif resource_type == "SUBNET":
         res = _resources_list(':9696/v2.0/subnets','200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['subnets']
+            return res
+        resources = res['message']['subnets']
 
     elif resource_type == "ROUTER":
         res = _resources_list(':9696/v2.0/routers','200')
-        if not res:
+        if res['status'] == "error":
             print "There is not any %s on Openstack!" %(resource_type)
-            return False
-        resources = res['routers']
+            return res
+        resources = res['message']['routers']
 
     else:
         print "The %s resource is not supported..." %(resource_type)
-        return False 
+        return {"status":"error" , "message" : "Resource Type was not found"}
 
     resource_id = ""
     for resource in resources :
@@ -111,9 +113,9 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
 
     if not resource_id :
         print "There is not resource %s with name %s on open stack!"  % (resource_type,resource_name)
-        return False
+        return {"status":"error" , "message" : "Resource was not found"}
     
-    return str(resource_id)
+    return {"status":"success" , "message" : str(resource_id) }
 
 
 

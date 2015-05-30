@@ -47,13 +47,9 @@ def add_image(self, appliance_spec):
  
 
     print "header list is: ", header_list
-
     result = curl(self.controller + ':9292/v1/images', header_list, '201', 'POST')
-    if result['status'] == "error":
-	result['message'] = "Cannot create image : "+result['message']
+    # ------------------------------------ Isn't it 202? --------------------------------------
+    if result['status'] == "error :
         return result
-    #image_id = result['image']['id']
-    #return {"image_id": image_id}
-    
     image_id = result['message']['image']['id']
-    return {"status":"success", "message":image_id}
+    return {"image_id": image_id}

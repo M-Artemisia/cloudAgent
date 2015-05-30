@@ -26,9 +26,14 @@ def install_server(self, user, password, project, instance_name, external_ip_poo
     flavor_id = resource._get_resource_id(self,"FLAVOR",flavor)
     print "STEP 2"
 
-    if not internal_net_id or not image_id or not flavor_id :
+    #if not internal_net_id or not image_id or not flavor_id :
+    if (internal_net_id['status'] == "error") or (image_id['status'] == "error") or (flavor_id['status'] == "error") :
         print "internal_net_id=%s, image_id=%s, flavor_id=%s" %(internal_net_id, image_id, flavor_id)
-        return False
+        return {"status":"error" , "message":"error in getting resource id : internal_net_id= "+internal_net_id+", image_id="+image_id+", flavor_id="+flavor_id}
+
+    internal_net_id =  internal_net_id['message']
+    image_id = image_id['message']
+    flavor_id = flavor_id['message']
 
     request = {"server":{ \
             "name": instance_name,\
@@ -38,30 +43,36 @@ def install_server(self, user, password, project, instance_name, external_ip_poo
                 "security_groups": [{"name": security_group}]}}
     print "STEP 3"
 
-    tenant_id = resource._get_resource_id(self,"TENANT",project)
-    if not tenant_id:
-        return False
-    if not keystoneWrapper.get_token(self, user, password, project) :
-        print "user, password, project ", user, password, project
-        return False
+    tenant_id_res = resource._get_resource_id(self,"TENANT",project)
+    if tenant_id_res['status'] == "error" :
+        return tenant_id_res
+    tenant_id = str(tenant_id_res['message'])
+
+    token_res = keystoneWrapper.get_token(self, user, password, project)
+    if token_res['status'] == "error":
+        print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
+        return token_res
+    token = token_res['message']
 
     result = curl(self.controller + ':8774/v2/' + tenant_id + '/servers', \
-                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
+                      ['X-Auth-Token: ' + token ,\
                            'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
                       '202', 'POST', request)
     print "STEP 4"
-    if not result :
-        print "install server result is false"
-        return False
+    if result['status'] == "error" :
+        print "Failed to install server"
+	result['message'] = "Failed to install server : ", result['message'] 
+        return result
 
     print "STEP 5"
     #sleep(10)
-    network = neutronWrapper._assign_float_ip(self, user, password, project, external_ip_pool, instance_name)
-    if not network:
+    network_res = neutronWrapper._assign_float_ip(self, user, password, project, external_ip_pool, instance_name)
+    if network_res['status'] == "error":
         print "STEP 6"
-        return False
+        return network_res
 
     print "STEP 6"
+    network = network_res['message']
 
     octets = re.split('(.*)\.(.*)\.(.*)\.(.*)', network)
     print "the image is installed. its invalid_ip: %s and the valid_ip: 217.218.62.%s" %(network, str(octets[4:5].pop())); print; print #TEST
@@ -74,34 +85,47 @@ def remove_server(self, user, password, project, server):
 
     print "Testing Remove Server Function "
 
-    tenant_id = resource._get_resource_id(self,"TENANT",project)
-    if not tenant_id :
-        return False
+    tenant_id_res = resource._get_resource_id(self,"TENANT",project)
+    if tenant_id_res['status'] == "error" :
+        return tenant_id_res
+    tenant_id = str(tenant_id_res['message'])
 
     print "STEP 1: tenant_id is ",tenant_id 
 
-    #server_id = resource._get_resource_id(self,"SERVER",server, self.username, self.password, self.tenant)
-    server_id = resource._get_resource_id(self,"SERVER",server, user, password, project)
-    #server_id = resource._get_resource_id(self,"SERVER",server,project)
-    if not server_id :
-        return False
+    ##server_id = resource._get_resource_id(self,"SERVER",server, self.username, self.password, self.tenant)
+    #server_id = resource._get_resource_id(self,"SERVER",server, user, password, project)
+    ##server_id = resource._get_resource_id(self,"SERVER",server,project)
+    server_id_res = resource._get_resource_id(self,"SERVER",server, user, password, project)
+    if server_id_res['status'] == "error" :
+	return server_id_res
+
+    server_id = server_id_res['message']
 
 
-    #----- Added to get float_ip associated with the server
+    #----- Added to get float_ip associated with the server to release
     #The code works when there is only one floating_ip in the tenant. 
     #In demo, the server and the ip associated to it, are created in their tenant. so it's ok to just retrun the first entry of the curl result :)
     print "STEP 2: release float ip"
     #1_"getting the float ip id"
     #float_ip_id = resource._get_floatip_id(self,"FLOATIP", tenant_id, user, password, project)
+    
+    #Getting token:
+    token_res = keystoneWrapper.get_token(self, user, password, project)
+    if token_res['status'] == "error":
+        print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
+        return token_res
+    token = token_res['message']
+    #
+
     float_ip_id = ""
     float_ip = ""
-    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', \
-                          ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
+    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', ['X-Auth-Token: ' + token ,\
                                'Accept: application/json', 'Access-Control-Allow-Origin: *'], '200', 'GET')
-    if not result:
+    if result['status'] == "error" :
 	print "No floating ip found for the tenant_id"
     else:
     	print "floating_ips for the tenant : ", result
+	result = result['message']
         try:
 	    float_ip_id = result['floating_ips'][0]['id']
 	    float_ip = result['floating_ips'][0]['ip']
@@ -116,23 +140,21 @@ def remove_server(self, user, password, project, server):
  	    #"2_removing the float ip from the server"
     	    request = {"removeFloatingIp": {"address": str(float_ip)}}
     	    result = curl(self.controller + ':8774/v2/' + tenant_id + '/servers/' + str(server_id) +'/action', \
-            	['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
-                    'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], '202', 'POST',request)
+            	['X-Auth-Token: ' + token ,'Content-Type: application/json', \
+			'Accept: application/json', 'Access-Control-Allow-Origin: *'], '202', 'POST',request)
 	    #deallocate_float_ip(self, user, password, project, tenant_id, id)
-    	    if not result:
+    	    if result['status'] == "error" :
         	print "Cannot disassociate floating ip from the server"
     	    else:
         	print "Floating ip disassociated from the server"
    	    
 
 	    #3_deallocating float ip - DO NOT USE ADMIN TOKEN! You can only deallocate ips allocated to a tenant using the token for that tenant!!
-            """ipresult = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(float_ip_id) , \
-                        ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
+            """ipresult = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(float_ip_id) , ['X-Auth-Token: ' + token ,\
                                 'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
                       	'202', 'DELETE')"""
 	    ipresult = deallocate_float_ip(self, user, password, project, tenant_id, str(float_ip_id))
-	    print "ipresult (deallocate) : ", ipresult
-	    if not ipresult :
+	    if ipresult['status'] == "error" :
                 print "STEP 2: Cannot deallocate floating IP from the server!!--"
                 #return False #We don't retrun Flase here
             else :
@@ -146,32 +168,45 @@ def remove_server(self, user, password, project, server):
     request = '{"force_delete": null}'    
     
     result = curl(self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id, \
-                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, user, password, project) ,\
-                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
-                      '204', 'DELETE')
+		['X-Auth-Token: ' + token ,'Content-Type: application/json', 'Accept: application/json',\
+ 				'Access-Control-Allow-Origin: *'], '204', 'DELETE')
     
     print " ************************************************* "
     #print self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id +'HEADERS: X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username, self.password, self.tenant) + '  -H Content-Type: application/json'+'  -H Accept: application/json   '+'  -H Access-Control-Allow-Origin: *'+'  204', '  DELETE'
-    print "STEP 3: result is ", result
-    if not result :
-  	return False
+    print "STEP 3: "
+    if result['status'] == "error" :
+  	print "Failed to remove server : "
+	result['message'] = "Failed to remove server : "+ str(result['message']) 
+	return result
     print "server is removed"
-    return result 
+    return result  #result is not used, only success is important
 
 
 def add_flavor(self, user, password, project, flavor_name, ram, vcpus, disk):
     #ram based on M, disk Based on G
     print "Testing Flavor Add Function "
-    tenant_id = resource._get_resource_id(self,"TENANT",self.tenant)
-    if not tenant_id :
-        return False
+    
+    tenant_id_res = resource._get_resource_id(self,"TENANT",project)
+    if tenant_id_res['status'] == "error" :
+        return tenant_id_res
+    tenant_id = str(tenant_id_res['message'])
+
+
+    #Getting token:
+    token_res = keystoneWrapper.get_token(self, user, password, project)
+    if token_res['status'] == "error":
+        print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
+        return token_res
+    token = token_res['message']
+    #
+
     request = {"flavor": {"name": flavor_name, "ram": ram, "vcpus" : vcpus, "disk" : disk ,"id": time.strftime("%Y%m%d_%H%M%S", time.gmtime()) }}
     result = curl(self.controller + ':8774/v2/'+ tenant_id + '/flavors', \
-                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username,self.password,self.tenant) ,\
-                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
-                      '200', 'POST', request)
-    if not result :
-        return False
+    		['X-Auth-Token: ' + token , 'Content-Type: application/json',\ 
+			'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'POST', request)
+    if result['status'] == "error":
+	print "Cannot add flavor"
+        return result
     print "flavor is added"
     return result
 
@@ -179,20 +214,30 @@ def add_flavor(self, user, password, project, flavor_name, ram, vcpus, disk):
 def remove_flavor(self, user, password, project,flavor):
 
     print "Testing Flavor Remove Function "
-    tenant_id = resource._get_resource_id(self,"TENANT",self.tenant)
-    if not tenant_id :
-        return False
+    tenant_id_res = resource._get_resource_id(self,"TENANT",project)
+    if tenant_id_res['status'] == "error" :
+        return tenant_id_res
+    tenant_id = str(tenant_id_res['message'])
 
     flavor_id = resource._get_resource_id(self,"FLAVOR",flavor)
-    if not flavor_id :
-        return False
+    if flavor_id['status'] == "error" :
+        return flavor_id
+    flavor_id = flavor_id['message']
+
+    #Getting token:
+    token_res = keystoneWrapper.get_token(self, user, password, project)
+    if token_res['status'] == "error":
+        print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
+        return token_res
+    token = token_res['message']
+    #
 
     result = curl(self.controller + ':8774/v2/'+ tenant_id + '/flavors/' + flavor_id, \
-                      ['X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username, self.password, self.tenant) ,\
-                           'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
-                      '202', 'DELETE')
-    if not result :
-        return False
+                      ['X-Auth-Token: ' + token ,'Content-Type: application/json', 'Accept: application/json', \
+ 				'Access-Control-Allow-Origin: *'], '202', 'DELETE')
+    if result['status'] == "error" :
+	print "Cannot remove flavor"
+        return result
     print "flavor is removed"
     return result
 
@@ -201,23 +246,39 @@ def remove_flavor(self, user, password, project,flavor):
 def deallocate_float_ip(self, user, password, project, tenant_id, id):
     #print "id is ", id
     #print "tenant id is ", tenant_id
-    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(id)  , \
-                ['X-Auth-Token: ' + keystoneWrapper.get_token( self, user, password, project ),\
-                        'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'202', 'DELETE')
-    if not result :
-        print "--deallocate False--"
-        return False
 
-    return True
+    #Getting token:
+    token_res = keystoneWrapper.get_token(self, user, password, project)
+    if token_res['status'] == "error":
+        print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
+        return token_res
+    token = token_res['message']
+    #
+
+    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(id)  , \
+                ['X-Auth-Token: ' + token ,'Content-Type: application/json', \
+			'Accept: application/json', 'Access-Control-Allow-Origin: *'],'202', 'DELETE')
+    if result['status'] == "error" :
+        result['message'] = "--deallocate False--: "+ str(result['message'])
+        return result
+    result['message'] = "--IP deallocated--: "+ str(result['message'])
+    return result
 
 #added by jabbari
 def list_float_ips(self, user, password, project, tenant_id):
+
+    #Getting token:
+    token_res = keystoneWrapper.get_token(self, user, password, project)
+    if token_res['status'] == "error":
+        print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
+        return token_res
+    token = token_res['message']
+    #    
+
     result = curl('10.1.48.242:8774/v2/' + tenant_id + '/os-floating-ips', \
-                      ['X-Auth-Token: '  + keystoneWrapper.get_token( self, user, password, project ) , 'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'GET')
-    if not result :
-        return False
+                      ['X-Auth-Token: '  + token , 'Content-Type: application/json', \
+				'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'GET')
+    if result['status'] == "error" :
+        return result
 
     return result
-
-
-

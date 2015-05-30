@@ -24,14 +24,23 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         self.password = params["password"]
         self.tenant = params["tenant"]
         self.controller = params["controller"]
-        self.admin_token = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
-
-        self.admin_role_id= resource._get_resource_id(self,"TENANT",'admin')
-        self.member_role_id= resource._get_resource_id(self,"ROLE","_member_")
-
-        if not self.admin_role_id or not self.member_role_id :
-            print "It seems the Openstack has not correct roles for admin and _member_"
-            return False
+        #setting self.admin_token
+        self.admin_token_res = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
+	if self.admin_token_res['status'] == "error":
+	    str "unable to get admin token, openstackRestAdaptor init aborted\n"+str(self.admin_token_res['message'])
+	    print str
+	    return {'status' :'error', 'message': str}
+	self.admin_token = self.admin_token_res['message']
+	#
+	#setting self.admin_role_id & self.member_role_id
+        self.admin_role_id_res= resource._get_resource_id(self,"TENANT",'admin')
+        self.member_role_id_res= resource._get_resource_id(self,"ROLE","_member_")
+        if (self.admin_role_id_res['status'] == "error") or (self.member_role_id_res['status'] == "error") :
+            str = "It seems the Openstack has not correct roles for admin and _member_ \n"+str(self.admin_token_res['message'])
+            return {'status' :'error', 'message': str}
+        self.admin_role_id = self.admin_role_id_res['message']
+        self.member_role_id = self.member_role_id_res['message']
+	# 
         '''
         print "***********************************TEST******************************"
         print "ADAPTOR: ADD TENANT"
@@ -39,16 +48,24 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         #user="Adaptor_demo_user"; passw="1"; prj="DemoTest"
         user="xaas_for_startup"; passw="xaas_for_startup"; prj="XASS_FOR_STARTUP"
 
-        self.add_tenant(prj, "Demo Test in INIT Function", 102400, 1, 1)
+        res = self.add_tenant(prj, "Demo Test in INIT Function", 102400, 1, 1)
+	if res['status'] == "error":
+	    return {'status' :'error', 'message': str(res['message'])}	
 
         print "ADAPTOR: ADD user"
-        self.add_user(user, passw, prj)
+        res = self.add_user(user, passw, prj)
+	if res['status'] == "error":
+            return {'status' :'error', 'message': str(res['message'])}
 
         print "ADAPTOR: ADD role"
-        self.add_user_role(user, prj)
+        res = self.add_user_role(user, prj)
+	if res['status'] == "error":
+            return {'status' :'error', 'message': str(res['message'])}
 
         print "ADAPTOR: install image"
-        self.install_image(user ,passw, prj, "demo" )
+        res = self.install_image(user ,passw, prj, "demo" )
+	if res['status'] == "error":
+            return {'status' :'error', 'message': str(res['message'])}
         '''
 
     def add_user(self,name, password,project):       
@@ -66,7 +83,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
 
     def add_image(self, appliance_spec):
-            return glanceWrapper. add_image(self, appliance_spec)
+            return glanceWrapper.add_image(self, appliance_spec)
  
     def install_server(self, user, password, project, instance_name, external_ip_pool, internal_ip_pool, image_User, image_Pass, security_group = 'default', image='cirros-2', flavor='m1.small'):
         '''
@@ -92,8 +109,8 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         Create a network & a subnet for a specific project 
         """
         network = neutronWrapper.add_network(self, user, password, project, external,network_name)
-        if not network:
-            return False
+        if network['status'] == "error":
+            return network
         
         return neutronWrapper.add_subnet(self, user, password, project, network['network']['id'] ,subent_name,network_address)
 
@@ -108,12 +125,15 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
     def remove_router(self, user, password, project, router, subnet ):
 
-        if not neutronWrapper.remove_interface_from_router(self, user, password, project, router, subnet ):
-            return False 
+        res = neutronWrapper.remove_interface_from_router(self, user, password, project, router, subnet ):
+        if res['status'] == "error" :
+	    return res
 
         return neutronWrapper.remove_router(self, user, password, project, router)
 
     def remove_network(self, user, password, project, network, subnet):
-        neutronWrapper.remove_subnet(self, user, password, project, subnet)
+        res = neutronWrapper.remove_subnet(self, user, password, project, subnet)
+	if res['status'] == "error" :
+            return res
         return neutronWrapper.remove_network(self, user, password, project, network)
         
