@@ -13,9 +13,9 @@ import resource
 
 
 def get_token(self,username,password,tenant):
-""" 
-return: returns a dictionary of the form: {"status":"error"/"success" , "message": "error-message"/"token"}
-""" 
+    ''' 
+    return: returns a dictionary of the form: {"status":"error"/"success" , "message": "error-message"/"token"}
+    '''
 
     request = {"auth": {"tenantName": tenant , "passwordCredentials": {"username": username , "password": password }}}
     result = curl(self.controller + ':5000/v2.0/tokens', ['Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], '200', 'POST', request)
@@ -24,7 +24,7 @@ return: returns a dictionary of the form: {"status":"error"/"success" , "message
         print "request: ", request
         print "CurL:"+self.controller + ':5000/v2.0/tokens   ' + 'Content-Type: application/json    ' + 'Accept: application/json    ' + 'Access-Control-Allow-Origin: *    ' + '200'+ '   POST'
         return result
-    return {"status":"success" , "message": str(result['message']['access']['token']['id']))
+    return {"status":"success" , "message": str(result['message']['access']['token']['id'])}
 
 
 def add_user(self,name, password,project):

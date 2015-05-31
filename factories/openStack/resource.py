@@ -9,9 +9,9 @@ import keystoneWrapper
 
 
 def _get_resource_id(self, resource_type, resource_name, username=None, password=None,tenant=None):
-''' 
-returns: a dictionary of the form {"status": "error"/"success" , "message": "error-message"/"resource-id"}
-'''        
+    ''' 
+    returns: a dictionary of the form {"status": "error"/"success" , "message": "error-message"/"resource-id"}
+    '''        
     if username == None :
         username=self.username
         password=self.password

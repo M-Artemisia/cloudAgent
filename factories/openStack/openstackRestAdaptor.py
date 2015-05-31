@@ -27,7 +27,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         #setting self.admin_token
         self.admin_token_res = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
 	if self.admin_token_res['status'] == "error":
-	    str "unable to get admin token, openstackRestAdaptor init aborted\n"+str(self.admin_token_res['message'])
+	    str ="unable to get admin token, openstackRestAdaptor init aborted\n"+str(self.admin_token_res['message'])
 	    print str
 	    return {'status' :'error', 'message': str}
 	self.admin_token = self.admin_token_res['message']
@@ -125,7 +125,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
 
     def remove_router(self, user, password, project, router, subnet ):
 
-        res = neutronWrapper.remove_interface_from_router(self, user, password, project, router, subnet ):
+        res = neutronWrapper.remove_interface_from_router(self, user, password, project, router, subnet )
         if res['status'] == "error" :
 	    return res
 

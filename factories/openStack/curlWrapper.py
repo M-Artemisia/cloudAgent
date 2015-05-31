@@ -104,7 +104,7 @@ def curl(url, headers_list, response_code, method, req = None):
             #return json.loads(data.getvalue())
         else :
             #return True
-	    return {'status':'success', 'message':None} #OR {'message':"Ok"} 
+	    return {'status':'success', 'message':''} #OR {'message':None} 
     else :
         print "Error..."
         print "HEADERS: ",headers.getvalue()

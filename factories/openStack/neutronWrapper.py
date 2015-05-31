@@ -211,6 +211,7 @@ def add_router(self, user, password, project, router_name, gateway='ext-net', in
     #GET IP OF EXTERNAL NETWORK
     gateway_id = resource._get_resource_id(self,"NETWORK", gateway);
         #print "cant find gateway : ", gateway_id
+    if gateway_id['status'] == "error":
 	gateway_id['message'] = "Cannot find gateway " +str(gateway) +" : "+str(gateway_id['message']) 
 	return gateway_id
     gateway_id = gateway_id['message']
@@ -238,7 +239,7 @@ def add_router(self, user, password, project, router_name, gateway='ext-net', in
             "name": router_name,\
                 "external_gateway_info": {"network_id":gateway_id},\
                 "admin_state_up":"true"}}
-    router = curl(self.controller + ':9696/v2.0/routers', \ ['X-Auth-Token: ' + token ,\
+    router = curl(self.controller + ':9696/v2.0/routers', \ ['X-Auth-Token: ' + token , \
                            'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
                       '201', 'POST', request)
     if router['status'] == "error" :

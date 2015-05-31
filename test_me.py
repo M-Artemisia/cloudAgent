@@ -1,4 +1,5 @@
-from xCloudAgent.cloud_wrapper import xass_wrapper
+#from xCloudAgent.cloud_wrapper import xass_wrapper
+from cloud_wrapper import xass_wrapper
 
 
 user="asemani_demo_1"
@@ -9,7 +10,7 @@ wrapper = xass_wrapper()
 
 
 print wrapper.create_VPC({"name":user, "pass": password, "project": prj},'linux')
-'''
+''' 
 int_net = 'xaas_int'+'_VPC'
 int_subnet = 'xaas_subnet'+'_VPC'
 router = 'xaas_router'+'_VPC'
@@ -19,11 +20,12 @@ server={'net':int_net, 'subnet':int_subnet, 'router': router, 'server': server_n
 print wrapper.cleanup({"name":user, "pass": password, "project": prj+'_VPC'}, server)
 '''
 #create_VPS(self, image, ram-M, vcpus, disk-G)
-#print wrapper.create_VPS('linux', 3000, 1, 10)
+print wrapper.create_VPS('linux', 3000, 1, 10)
 
 user2="asemani_demo_2"
 
-print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
+
+#print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
 
 appliance_spec['url']='http://10.1.48.9/appliances/xgiSlave-jcloud-940205.qcow2'
 appliance_spec['name']='xgiSlave-jcloud-940205'
@@ -61,3 +63,4 @@ The keys are 'name': user name; 'pass': The user password for entering to Xamin 
 @rtype: Boolean
 @return: False if there is any problem in creating the VPC, otherwise True will be returned. 
 '''
+

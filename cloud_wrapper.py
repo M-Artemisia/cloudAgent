@@ -1,5 +1,5 @@
 import os, sys, time, atexit, re
-'''
+''' 
 app_path = os.path.dirname(__file__)
 sys.path.append(app_path)
 
@@ -46,7 +46,7 @@ class xass_wrapper:
         self.VPS_sec_group = config.VPS_sec_group
         
 
-        print self._get_internal_net_add()
+        print self._get_internal_net_add()  #Needs error handling
         
 
     def create_user(self,user_dict,server_dict):
@@ -55,8 +55,10 @@ class xass_wrapper:
         @type user_dict: Dict 
         @param user_dict: It has three keys which contains user info. 
         The keys are 'name': user name; 'pass': The user password for entering to Xamin IAAS; 'project': The name of Project which has been assigned to the user
-        @rtype: Boolean
-        @return: False if there is any problem in adding user or project, otherwise True will be returned. 
+        @rtype: A dictionary #Boolean
+        @return: {"status": "error"/"success" , "message":"error_message"/"returnValue"}. 
+	if status is "success", message may show the value.  
+	if status is "error", message contains the error message.  
         '''
 
         print "Creating Project....."
@@ -71,13 +73,21 @@ class xass_wrapper:
         user_dict['project'] = user_dict['project']+ time.strftime("%Y%m%d_%H%M%S", time.gmtime()) #+'_VPC' 
         self.user = user_dict
 
-        if not self._add_project(user_dict['project'], prj_desc, ram, cpu, instance_num) :
-            return False
+        result = self._add_project(user_dict['project'], prj_desc, ram, cpu, instance_num)
+        if result['status'] == "error" :
+	    return result
 
         print "Creating user...."
-        if not self._add_user(user_dict) :
-            self.adaptor.remove_tenant(user_dict['project'])
-            return False
+        result = self._add_user(user_dict)
+	if result['status'] == "error" :
+	    #print "Cannot create user. removing tenant..."
+            result = self.adaptor.remove_tenant(user_dict['project'])
+            if result['status'] == "error" :
+		#print "Cannot remove tenant"
+		result['message'] = "Cannot create user. Removing tenant... Filed\n"+ str(result['message'])
+	    else:
+		result['message'] = "Cannot create user. Removing tenant... Done\n"+ str(result['message'])
+            return result
 
         if "demo" in user_dict['project'] :
             newpid = os.fork()
@@ -85,12 +95,17 @@ class xass_wrapper:
                 print 'Time for Deletion is %s ' % config.demo_user_time
                 time.sleep(config.demo_user_time)
                 print; print "Im Removing Demo User & Project....................."
-                self.cleanup(user_dict,server_dict)
+                result = self.cleanup(user_dict,server_dict) #cleanup handles error messages
                 os._exit(0)  
                 
-        return True
+        return result
 
     def create_VPC(self, user_dict, image):
+        '''
+        @rtype: A dictionary
+        @return: {"status":"success", "message":"IP"} in case of success
+        and {"status":"error", "message":"error message"} in case of failure
+        '''
 
         print "CREATING Network FOR VPC....."
         #self.adaptor.add_network(user_dict['name'], user_dict['pass'], user_dict['project'] ,False ,'xaas_int4','xaas_subnet')
@@ -110,22 +125,25 @@ class xass_wrapper:
         server_name = 'Demo'
         server={'net':int_net, 'subnet':int_subnet, 'router': router, 'server': server_name}
 
-        if not self.create_user(user_dict,server):
-            return False
-
+        result = self.create_user(user_dict,server)
+	if result['status'] == "error":
+            return result
 
         print "Creating Network for VPC....."
-        if not self.adaptor.add_network(user_dict['name'], user_dict['pass'], user_dict['project'], False, int_net, int_subnet, network_address):
-
+        result = self.adaptor.add_network(user_dict['name'], user_dict['pass'], user_dict['project'], False, int_net, int_subnet, network_address)
+ 	if result['status'] == "error":
             print "Error in Adding Network"
-            self.cleanup(user_dict,server)
-            return False
+            result2 = self.cleanup(user_dict,server) #cleanup handles error message
+	    result['message'] = "Error in Adding Network" + str(result['message']) +"\n"+ str(result2['message'])
+	    return result
 
         print "Creating Router FOR VPC....."
-        if not self.adaptor.add_router(user_dict['name'], user_dict['pass'], user_dict['project'], router, self.VPC_external_network, int_subnet):
+        result = self.adaptor.add_router(user_dict['name'], user_dict['pass'], user_dict['project'], router, self.VPC_external_network, int_subnet)
+	if result['status'] == "error" :
             print "Cant add router...."
-            self.cleanup(user_dict,server)
-            return False
+            result2 = self.cleanup(user_dict,server)
+	    result['message'] = "Error in Adding Router" + str(result['message']) +"\n"+ str(result2['message'])
+            return result
 
         print "Creating a demo VPS on VPC .........."
         print "flavor in config file is: ", self.VPC_flavor_name 
@@ -133,11 +151,12 @@ class xass_wrapper:
         if result['status'] == "error" :
             print "Cant create instance.."
             self.cleanup(user_dict,server)
-            return False
+	    result['message'] = "Error in install_server: Cannot create instance" + str(result['message']) +"\n"+ str(result2['message'])
+            return result
     	else:
 	    ip = result['message']
 	    print "Valid_ip in cloud wrapper is: ", ip 
-        return True
+        return result
 
     def create_VPS(self, image, ram, vcpus, disk):
 
@@ -147,59 +166,57 @@ class xass_wrapper:
             image = self.Default_Windows_Image
 
         flavor = "xaas_flavor_"+time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-        if not self.adaptor.add_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor, ram, vcpus, disk):
-            return False
-        
+        result = self.adaptor.add_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor, ram, vcpus, disk)
+	if result['status'] == "error":
+	    result['message'] = "Failed to add flavor:\n"+ str(result['message'])  #because computeWrapper does not return complete messages
+            return result
+
 
         print "Creating a demo VPS .........."
         server = "VPS_"+time.strftime("%Y%m%d_%H%M%S", time.gmtime())
         
-        result = self.adaptor.install_server(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name , server, self.VPS_external_network, self.VPS_internal_network, self.Default_Image_User, self.Default_Image_Pass, self.VPS_sec_group , image, flavor)
-        if result['status'] == "error":
+        ip_result = self.adaptor.install_server(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name , server, self.VPS_external_network, self.VPS_internal_network, self.Default_Image_User, self.Default_Image_Pass, self.VPS_sec_group , image, flavor)
+        if ip_result['status'] == "error":
             print "Cant create instance.."
-            self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
-            return False
+            result2 = self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
+            ip_result['message'] = "Error in install_server: Cannot create instance" + str(ip_result['message']) +"\n"+ str(result2['message'])
+	    return ip_result
+	#ip = result['message']
+
         print "I am removing flavor..............."
-        self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
-        return ip
+        result = self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
+	if result['status'] == "error":
+	    print "Failed to remove Flavor" #only print. don't return becuase the server has installed.
+        	
+	return ip_result #contains ip
 
 
     def create_Image(self, image_info_dic):
 
-        self.adaptor.add_image(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor, ram, vcpus, disk):
-            return False
-        
+        result = self.adaptor.add_image(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor, ram, vcpus, disk)
+	#if result['status'] == "error":
+	    
+        #    return result
+        return result
 
-        print "Creating a demo VPS .........."
-        server = "VPS_"+time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-        
-        result = self.adaptor.install_server(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name , server, self.VPS_external_network, self.VPS_internal_network, self.Default_Image_User, self.Default_Image_Pass, self.VPS_sec_group , image, flavor)
-        if result['status'] == "error":
-            print "Cant create instance.."
-            self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
-            return False
-        print "I am removing flavor..............."
-        self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
-        return ip
-
-    
-    
 
 
     #*************************************PRIVATE FUNCTIONS**************************
     def _add_user(self, user_dict):
-        if not self.adaptor.add_user(user_dict['name'], user_dict['pass'], user_dict['project']) :
-            print "Error Accured in Adding User ....... "
-            return False
-        return True
+        result = self.adaptor.add_user(user_dict['name'], user_dict['pass'], user_dict['project'])
+	if result['status'] == "error" :
+            #print "Error Accured in Adding User ....... "
+	    result['message'] = "Error Accured in Adding User ....... \n" + result['message']
+            return result
+        return result
 
     def _add_project(self, project_name, description, ram, vcpu, instances):
-        out = self.adaptor.add_tenant(project_name, description, ram, vcpu, instances)
-        if not out :
-            print "Error Accured in Adding Project ....... "
-            return False
-        return True
-
+        result = self.adaptor.add_tenant(project_name, description, ram, vcpu, instances)
+        if result['status'] == "error" :
+            #print "Error Accured in Adding Project ....... "
+            result['message'] = "Error Accured in Adding Project ....... \n" + result['message']
+            return result
+        return result
 
     def _get_internal_net_add(self):
 
@@ -236,26 +253,41 @@ class xass_wrapper:
 
         return network_address
 
-
     def cleanup(self,user, server = None):
+	'''
+	@rtype: A dictionary #Boolean
+        @return: {"status":"success", "message":"NotImportant"} in case of success
+	and {"status":"error", "message":"error message"} in case of failure
+        '''
+
+
         print "Cleaning Environment...."
 
         if bool(server) :
             print "cleaning Server "
 
             print; print; print "Removing Server ********************************************* ", server[ 'server']
-            if self.adaptor.remove_server(user['name'], user['pass'], user['project'], server[ 'server']):
+            result = self.adaptor.remove_server(user['name'], user['pass'], user['project'], server[ 'server'])
+	    if result['status'] == "success":
                 time.sleep(3.0)
                 print; print; print "Removing Router ********************************************* ", server['router']
-                if self.adaptor.remove_router(user['name'], user['pass'], user['project'], server['router'], server['subnet']) :
-
+                #if self.adaptor.remove_router(user['name'], user['pass'], user['project'], server['router'], server['subnet']) :
+                result = self.adaptor.remove_router(user['name'], user['pass'], user['project'], server['router'], server['subnet'])
+		if result['status'] == "success":
                     print; print; print "Removing Network ********************************************* ", server['net']
-                    if not self.adaptor.remove_network(user['name'], user['pass'], user['project'], server['net'], server['subnet']):
-                        return False
+                    result2 = self.adaptor.remove_network(user['name'], user['pass'], user['project'], server['net'], server['subnet'])
+                    if result2['status'] == "error":
+			result2['message'] = "Cleaning Server: Failed to remove network :\n"+ str(result2['message'])
+			return result2
+		else:
+		    result['message'] = "Cleaning Server: Failed to remove router :\n"+ str(result['message'])
+		    return result
+		    
             else:
-                return False
-            '''
+		result['message'] = "Cleaning Server: Failed to remove server :\n" + result['message'] #temp - until couldWrapper or  does it
+                return result
 
+            ''' 
             if self.adaptor.remove_router(user['name'], user['pass'], user['project'], server['router'], server['subnet']) :
 
                 print "Removing Network will be implemented in the next version..."
@@ -267,9 +299,15 @@ class xass_wrapper:
 
         if bool(user) :
             print; print; print "cleaning user *********************************************  ", user['project'], user['name']
-            if self.adaptor.remove_tenant(user['project']):
-                self.adaptor.remove_user(user['name'])
-            else:
-                return False
+            result = self.adaptor.remove_tenant(user['project'])
+	    if result['status'] == "error" :
+		result['message'] = "Cleaning User: Failed to remove tenant so does the user :\n"+ str(result['message'])
+	    	return result
+	    
+            result2 = self.adaptor.remove_user(user['name'])
+	    if result2['status'] == "error" :
+                result2['message'] = "Cleaning User: Failed to remove user :\n"+ str(result2['message'])
+                return result2
 
-        return True
+
+        return result
