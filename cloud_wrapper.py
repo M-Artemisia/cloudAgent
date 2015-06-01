@@ -134,7 +134,7 @@ class xass_wrapper:
  	if result['status'] == "error":
             print "Error in Adding Network"
             result2 = self.cleanup(user_dict,server) #cleanup handles error message
-	    result['message'] = "Error in Adding Network" + str(result['message']) +"\n"+ str(result2['message'])
+	    result['message'] = "Error in Adding Network: " + str(result['message']) +"\n"+ str(result2['message'])
 	    return result
 
         print "Creating Router FOR VPC....."
@@ -142,7 +142,7 @@ class xass_wrapper:
 	if result['status'] == "error" :
             print "Cant add router...."
             result2 = self.cleanup(user_dict,server)
-	    result['message'] = "Error in Adding Router" + str(result['message']) +"\n"+ str(result2['message'])
+	    result['message'] = "Error in Adding Router: " + str(result['message']) +"\n"+ str(result2['message'])
             return result
 
         print "Creating a demo VPS on VPC .........."
@@ -151,7 +151,7 @@ class xass_wrapper:
         if result['status'] == "error" :
             print "Cant create instance.."
             self.cleanup(user_dict,server)
-	    result['message'] = "Error in install_server: Cannot create instance" + str(result['message']) +"\n"+ str(result2['message'])
+	    result['message'] = "Error in install_server: Cannot create instance. " + str(result['message']) +"\n"+ str(result2['message'])
             return result
     	else:
 	    ip = result['message']
@@ -193,7 +193,8 @@ class xass_wrapper:
 
     def create_Image(self, image_info_dic):
 
-        result = self.adaptor.add_image(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor, ram, vcpus, disk)
+        #result = self.adaptor.add_image(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor, ram, vcpus, disk)
+        result = self.adaptor.add_image(image_info_dic)
 	#if result['status'] == "error":
 	    
         #    return result

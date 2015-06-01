@@ -202,7 +202,7 @@ def add_flavor(self, user, password, project, flavor_name, ram, vcpus, disk):
 
     request = {"flavor": {"name": flavor_name, "ram": ram, "vcpus" : vcpus, "disk" : disk ,"id": time.strftime("%Y%m%d_%H%M%S", time.gmtime()) }}
     result = curl(self.controller + ':8774/v2/'+ tenant_id + '/flavors', \
-    		['X-Auth-Token: ' + token , 'Content-Type: application/json',\ 
+    		['X-Auth-Token: ' + token , 'Content-Type: application/json', \
 			'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'POST', request)
     if result['status'] == "error":
 	print "Cannot add flavor"

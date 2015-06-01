@@ -35,7 +35,7 @@ def add_user(self,name, password,project):
     tenant_id = tenant_id['message']
 
     #Getting token:
-    token = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
+    token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
         print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
         #token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
@@ -70,7 +70,7 @@ def _add_user_role(self, username, project):
     user_id = user_id['message']
 
     #Getting token:
-    token = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
+    token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
         print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
         return token
@@ -91,7 +91,7 @@ def remove_user(self,username):
     user_id = user_id['message']
 
     #Getting token:
-    token = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
+    token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
         print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
         return token
@@ -109,7 +109,7 @@ def add_tenant(self, name, desc, ram, vcpu, instances):
     request = {"project": {"description": desc , "enabled": True , "name": name, "domain_id" : "default" }}
         
     #Getting token:
-    token = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
+    token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
         print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
         return token

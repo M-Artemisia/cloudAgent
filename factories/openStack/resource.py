@@ -24,8 +24,18 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
             username=self.username
             password=self.password
             tenant=self.tenant
+
+	#Getting token:
+    	token_res = keystoneWrapper.get_token(self, username, password, tenant)
+    	if token_res['status'] == "error":
+            #print "Error in getting token for user=%s, password=%s, project=%s " %(username, password, tenant)
+            token_res['message'] = "Error in getting token for user="+username +", password="+password+", project="+tenant+ "\n"+ \
+                                         str(token_res['message'])
+            return token_res
+    	token = str(token_res['message'])
+
         result = curl(self.controller + str(client_type), \
-                              ['X-Auth-Token: ' + keystoneWrapper.get_token(self, username,password,tenant), "Accept: application/json",'Access-Control-Allow-Origin: *'], response_code, 'GET')
+                              ['X-Auth-Token: '+token, "Accept: application/json",'Access-Control-Allow-Origin: *'], response_code, 'GET')
         return result
 
     resources = []

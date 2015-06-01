@@ -33,7 +33,7 @@ def add_image(self, appliance_spec):
         return {"status": "error", "message": "Appliance Name & appliance URL can't be None!"}
             
     #header_list.append('x-glance-api-copy-from: ' + re.match(r'(.*).xvm2',appliance_spec['url']).group(1) + '.qcow2' )
-    header_list.append('x-glance-api-copy-from: ' + appliance_spec['url']))
+    header_list.append('x-glance-api-copy-from: ' + appliance_spec['url'])
     header_list.append('x-image-meta-name: ' + appliance_spec['name'])
 
     if appliance_spec["installed_size"] != "None" :

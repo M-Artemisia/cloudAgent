@@ -239,7 +239,7 @@ def add_router(self, user, password, project, router_name, gateway='ext-net', in
             "name": router_name,\
                 "external_gateway_info": {"network_id":gateway_id},\
                 "admin_state_up":"true"}}
-    router = curl(self.controller + ':9696/v2.0/routers', \ ['X-Auth-Token: ' + token , \
+    router = curl(self.controller + ':9696/v2.0/routers', ['X-Auth-Token: ' + token , \
                            'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
                       '201', 'POST', request)
     if router['status'] == "error" :
@@ -304,7 +304,7 @@ def remove_network(self, user, password, project, network):
         return token_res
     token = str(token_res['message'])
 
-    result = curl(self.controller + ':9696/v2.0/networks/'+ str(net_id) , ['X-Auth-Token: + token ,\
+    result = curl(self.controller + ':9696/v2.0/networks/'+ str(net_id) , ['X-Auth-Token: ' + token ,\
                            'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
                       '204', 'DELETE')
     if result['status'] == "error" :
