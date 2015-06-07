@@ -1,14 +1,25 @@
 #from xCloudAgent.cloud_wrapper import xass_wrapper
 from cloud_wrapper import xass_wrapper
 
-
+''' 
 user="asemani_demo_1"
 password= "mali123asemani098_"
+prj="VPC_XAAS_demo"
+'''
+
+user="jabbari_demo_1"
+password= "jbjbjbjb_"
 prj="VPC_XAAS_demo"
 
 wrapper = xass_wrapper()
 
-#print wrapper.create_VPC({"name":user, "pass": password, "project": prj},'linux')
+result = wrapper.create_VPC({"name":user, "pass": password, "project": prj},'linux')
+if result['status'] == "success" :
+    print "---- Create VPC : Success -------\n\n"
+else:
+    print"---- Create VPC : error message: --------\n" + result['message'] + '\n' 
+
+
 ''' 
 int_net = 'xaas_int'+'_VPC'
 int_subnet = 'xaas_subnet'+'_VPC'
@@ -18,22 +29,27 @@ server_name = 'Demo'
 server={'net':int_net, 'subnet':int_subnet, 'router': router, 'server': server_name}
 print wrapper.cleanup({"name":user, "pass": password, "project": prj+'_VPC'}, server)
 '''
-#create_VPS(self, image, ram-M, vcpus, disk-G)
+
+##create_VPS(self, image, ram-M, vcpus, disk-G)
 #print wrapper.create_VPS('linux', 3000, 1, 10)
 
+
 user2="asemani_demo_2"
+##print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
+##print wrapper.create_vpc({"name":user, "pass": password, "project": prj},'linux','192.168.83.0/24')
 
-
-#print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
-
-
-
+#--------------- Add image to glance --------------
+""" 
 appliance_spec= {'url':'http://10.1.48.9/appliances/xgiSlave-jcloud-940205.qcow2', 'name':'xgiSlave-jcloud-940205', \
 	'installed_size':'40', 'memory':'2', 'storage':'40'}
 
-print wrapper.create_Image({"url":appliance_spec['url'], "name": appliance_spec['name'], \
+result = wrapper.create_Image({"url":appliance_spec['url'], "name": appliance_spec['name'], \
 	"installed_size":appliance_spec["installed_size"], "memory":appliance_spec["memory"], "storage": appliance_spec["storage"]})
-#print wrapper.create_vpc({"name":user, "pass": password, "project": prj},'linux','192.168.83.0/24')
+if result['status'] == "error":
+    print result['message']
+else:
+    print "Image Successfully added to openstack"
+"""
 
 '''
 create_user(user_dict) Function

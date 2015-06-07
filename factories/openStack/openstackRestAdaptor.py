@@ -24,14 +24,17 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         self.password = params["password"]
         self.tenant = params["tenant"]
         self.controller = params["controller"]
+        """ 
         #setting self.admin_token
         self.admin_token_res = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
 	if self.admin_token_res['status'] == "error":
-	    str ="unable to get admin token, openstackRestAdaptor init aborted\n"+str(self.admin_token_res['message'])
-	    print str
-	    return {'status' :'error', 'message': str}
+	    st ="unable to get admin token, openstackRestAdaptor init aborted\n"+ self.admin_token_res['message']
+	    print st
+	    return {'status' :'error', 'message': st}
 	self.admin_token = self.admin_token_res['message']
-	#
+	"""
+
+	""" # Because init should not have return value, code moved to the place of use
 	#setting self.admin_role_id & self.member_role_id
         self.admin_role_id_res= resource._get_resource_id(self,"TENANT",'admin')
         self.member_role_id_res= resource._get_resource_id(self,"ROLE","_member_")
@@ -40,8 +43,9 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
             return {'status' :'error', 'message': str}
         self.admin_role_id = self.admin_role_id_res['message']
         self.member_role_id = self.member_role_id_res['message']
-	# 
-        '''
+	"""
+
+        ''' 
         print "***********************************TEST******************************"
         print "ADAPTOR: ADD TENANT"
 
@@ -112,7 +116,7 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         if network['status'] == "error":
             return network
         
-        return neutronWrapper.add_subnet(self, user, password, project, network['network']['id'] ,subent_name,network_address)
+        return neutronWrapper.add_subnet(self, user, password, project, network['message']['network']['id'] ,subent_name,network_address)
 
 
     def add_router(self, user, password, project, router_name, gateway='ext-net', internal_subnet='xaas_subnet'):

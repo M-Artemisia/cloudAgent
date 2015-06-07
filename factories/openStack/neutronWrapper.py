@@ -22,10 +22,9 @@ def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
     associated = False
     
     result = computeWrapper.list_float_ips(self, user, password, project, tenant_id)  #you cannot list ips when token does not match the project.
-    result['message'] = "Can list float ips : \n"+ str(result['message'])
     if result['status'] == "error" :
+    	result['message'] = "Generate new float ip: Failed to list float ips : \n"+ str(result['message'])
     	return result
-
     result = result['message']
     print "list of floating ips for tenenat ",tenant_id
     print result
@@ -55,13 +54,12 @@ def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+        token_res['message'] = "Generate new float ip: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
 					 str(token_res['message'])
   	return token_res    
-    token = str(token_res['message'])
+    token = token_res['message']
 	
-    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', \
-    	['X-Auth-Token: ' + token ,\
+    result = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips', ['X-Auth-Token: ' + str(token) , \
         	'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'200', 'POST', request)
     if result['status'] == "error" :
 	result['message'] = "Can not allocate new floating ip : \n"+ str(result['message'])
@@ -94,8 +92,8 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
 
     tenant_id = resource._get_resource_id(self,"TENANT",project)
     if tenant_id['status'] == "error" :
-        print "cant find the project ",tenant_id 
-        tenant_id['message'] = "Cannot find tenant : "+ str(tenant_id['message'])
+        print "in assign float ip: cant find the project ",tenant_id 
+        tenant_id['message'] = "assign float ip: error in getting resource id:\n"+ str(tenant_id['message'])
 	return tenant_id
     #tenant_id = str(tenant_id['message'])
     tenant_id = tenant_id['message']
@@ -112,7 +110,7 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+        token_res['message'] = "In assign float ip: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
                                          str(token_res['message'])
         return token_res
     token = str(token_res['message'])
@@ -122,7 +120,7 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
            
     if res['status'] == "error":
         #print "cant find server list!"
-	res['message'] ="Cannor find server list : " +str(res['message'])
+	res['message'] ="In assign float ip: Cannot find server list : \n" +str(res['message'])
         return res
     resources = res['message']['servers']
 
@@ -133,7 +131,7 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
 
     if not server_id :
         print "There is no server with name %s on open stack!"  % (server)
-        return {"status" : "error" , "message" : "There is no server with name "+server+" on open stack!"}
+        return {"status" : "error" , "message" : "In assign float ip: There is no server with name "+server+" on open stack!"}
     #print "The ID of the  server, with name %s is  %s" % (str(server), str(server_id))
 
 
@@ -152,9 +150,10 @@ def add_network(self, user, password, project, external=False,network_name='xaas
     """
     tenant_id = resource._get_resource_id(self,"TENANT", project);
     if tenant_id['status'] == "error" :
-	print "cant find the project ",tenant_id
-        tenant_id['message'] = "Cannot find tenant : "+ str(tenant_id['message'])
+	print "In add network: cant find the project ",tenant_id
+        tenant_id['message'] = "In add network: Cannot find tenant : \n"+ str(tenant_id['message'])
         return tenant_id
+    tenant_id = tenant_id['message']
     #create_network
     request = {"network":{ \
             "tenant_id": tenant_id,\
@@ -164,17 +163,16 @@ def add_network(self, user, password, project, external=False,network_name='xaas
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+        token_res['message'] = "In add network: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
                                          str(token_res['message'])
 	return token_res
     token = str(token_res['message'])
 
-    network = curl(self.controller + ':9696/v2.0/networks', \
-                       ['X-Auth-Token: ' + token ,\
+    network = curl(self.controller + ':9696/v2.0/networks', ['X-Auth-Token: ' + token , \
                             'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
-                       '201', 'POST', request)
+                       	      	'201', 'POST', request)
     if network['status'] == "error" :
-	network['message'] = "Can not add network : "+ str(network['message'])
+	network['message'] = "Cannot add network : \n"+ network['message']
         return network
     return network
 
@@ -183,7 +181,7 @@ def add_subnet(self, user, password, project, network_id ,subent_name='xaas_subn
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+        token_res['message'] = "In add subnet: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
                                          str(token_res['message'])
 	return token_res
     token = str(token_res['message'])
@@ -212,14 +210,14 @@ def add_router(self, user, password, project, router_name, gateway='ext-net', in
     gateway_id = resource._get_resource_id(self,"NETWORK", gateway);
         #print "cant find gateway : ", gateway_id
     if gateway_id['status'] == "error":
-	gateway_id['message'] = "Cannot find gateway " +str(gateway) +" : "+str(gateway_id['message']) 
+	gateway_id['message'] = "In add router: Cannot find gateway " +str(gateway) +" :\n"+str(gateway_id['message']) 
 	return gateway_id
     gateway_id = gateway_id['message']
 
     subnet_id = resource._get_resource_id(self,"SUBNET", internal_subnet)
     if subnet_id['status'] == "error":
         #print "cant find subnet", subnet_id
-	subnet_id['message'] = "Cannot find subnet "+str(internal_subnet)+" : "+ str(subnet_id['message'])
+	subnet_id['message'] = "In add router: Cannot find subnet "+str(internal_subnet)+" :\n"+ str(subnet_id['message'])
         return subnet_id
     subnet_id = subnet_id['message']
 
@@ -229,7 +227,7 @@ def add_router(self, user, password, project, router_name, gateway='ext-net', in
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+        token_res['message'] = "In add router: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
                                          str(token_res['message'])
 	return token_res
     token = str(token_res['message'])
@@ -243,13 +241,14 @@ def add_router(self, user, password, project, router_name, gateway='ext-net', in
                            'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
                       '201', 'POST', request)
     if router['status'] == "error" :
-	router['message'] = "Failed to created router : "+ router['message']
+	router['message'] = "Failed to created router : \n"+ router['message']
         return router
             
     #ADD Interface
     result = _add_interface_to_router(self,user, password, project, router_name,internal_subnet)
-    #if result['status'] == "error" :
-    #	return result
+    if result['status'] == "error" :
+	interface['message'] = "In add router :\n"+ interface['message']
+    	return result
     return result 
 
 def _add_interface_to_router(self, user, password, project, router_name, internal_subnet ):
@@ -257,13 +256,13 @@ def _add_interface_to_router(self, user, password, project, router_name, interna
 
     router_id = resource._get_resource_id(self,"ROUTER", router_name);
     if router_id['status'] == "error" : 
-	router_id['message'] = "Cannot find router "+str(router_name) + " : " + str(router_id['message'])
+	router_id['message'] = "In add interface to router: Cannot find router "+str(router_name) + " :\n" + str(router_id['message'])
 	return router_id
     router_id = router_id['message']
 
     subnet_id = resource._get_resource_id(self,"SUBNET", internal_subnet)
     if subnet_id['status'] == "error":
-        subnet_id['message'] = "Cannot find subnet "+str(internal_subnet)+" : "+ str(subnet_id['message'])
+        subnet_id['message'] = "In add interface to router: Cannot find subnet "+str(internal_subnet)+" :\n"+ str(subnet_id['message'])
         return subnet_id
     subnet_id = subnet_id['message']
 
@@ -273,7 +272,7 @@ def _add_interface_to_router(self, user, password, project, router_name, interna
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
- 	token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+ 	token_res['message'] = "In add interface to router: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
                                          str(token_res['message'])
         return token_res
     token = str(token_res['message'])
@@ -282,7 +281,7 @@ def _add_interface_to_router(self, user, password, project, router_name, interna
                          ['X-Auth-Token: ' + token, 'Content-Type: application/json',\
 				 'Accept: application/json','Access-Control-Allow-Origin: *'], '200', 'PUT', request)
     if interface['status'] == "error" :
-	interface['message'] = "Failed to add interface to router :\n"+ str(interface['message'])
+	interface['message'] = "Failed to add interface to router :\n"+ interface['message']
         return interface
     return interface
 
@@ -291,7 +290,7 @@ def remove_network(self, user, password, project, network):
 
     net_id = resource._get_resource_id(self,"NETWORK",network)
     if net_id['status'] == "error" :
-	net_id['message'] = "Cannot find NETWORK "+str(network)+" : "+ str(net_id['message'])
+	net_id['message'] = "In remove network: Cannot find NETWORK "+str(network)+" :\n"+ str(net_id['message'])
         return net_id
     net_id = net_id['message']
 
@@ -299,7 +298,7 @@ def remove_network(self, user, password, project, network):
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-	token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+	token_res['message'] = "In remove network: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
                                          str(token_res['message'])
         return token_res
     token = str(token_res['message'])
@@ -320,16 +319,16 @@ def remove_subnet(self, user, password, project, subnet):
 
     subnet_id = resource._get_resource_id(self,"SUBNET",subnet)
     if subnet_id['status'] == "error" :
-	subnet_id['message'] = "Cannot find subnet "+str(internal_subnet)+" : "+ str(subnet_id['message'])
+	subnet_id['message'] = "In remove subnet: Cannot find subnet "+str(internal_subnet)+" :\n"+ str(subnet_id['message'])
         return subnet_id
     subnet_id = subnet_id['message']
 
-    print "user pass and subnet in this project is: "
+    #print "user pass and subnet in this project is: "
     #Getting token:
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+        token_res['message'] = "In remove subnet: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
                                          str(token_res['message'])
 	return token_res
     token = str(token_res['message'])
@@ -350,14 +349,15 @@ def remove_router(self, user, password, project, router):
 
     router_id = resource._get_resource_id(self,"ROUTER",router)
     if router_id['status'] == "error" :
-	router_id['message'] = "Cannot find router "+str(router_name) + " : " + str(router_id['message'])
+	router_id['message'] = "In remove router: Cannot find router "+str(router_name) + " :\n" + str(router_id['message'])
         return router_id
     router_id = router_id['message']
 
     #Getting token:
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
-        print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
+	token_res['message'] = "In remove router: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
+                                         str(token_res['message'])
         return token_res
     token = str(token_res['message'])
 
@@ -377,28 +377,27 @@ def remove_interface_from_router(self, user, password, project, router, subnet):
 
     router_id = resource._get_resource_id(self,"ROUTER",router)
     if router_id['status'] == "error" :
-        router_id['message'] = "Cannot find router "+str(router) + " : " + str(router_id['message'])
+        router_id['message'] = "In remove interface from router: Cannot find router "+str(router) + " :\n" + str(router_id['message'])
         return router_id
     router_id = router_id['message']
 
     subnet_id = resource._get_resource_id(self,"SUBNET",subnet)
     if subnet_id['status'] == "error" :
-        subnet_id['message'] = "Cannot find router "+str(subnet) + " : " + str(subnet_id['message'])
+        subnet_id['message'] = "In remove subnet from router: Cannot find router "+str(subnet) + " :\n" + str(subnet_id['message'])
         return subnet_id
-    subnet_id = subnet_id['message']	
+    subnet_id = subnet_id['message']
 
     #Getting token:
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
-        #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
-                                         str(token_res['message'])
+        token_res['message'] = "In remove subnet from router: Error in getting token for user="+user+", password="+password+ \
+			", project="+project+ "\n"+ str(token_res['message'])
 	return token_res
-    token = str(token_res['message'])
+    token = token_res['message']
 
     request = {"subnet_id": str(subnet_id)}
     result = curl(self.controller + ':9696/v2.0/routers/'+ str(router_id) + '/remove_router_interface', \
-		['X-Auth-Token: ' + token, 'Content-Type: application/json', 'Accept: application/json', \
+		['X-Auth-Token: ' + str(token), 'Content-Type: application/json', 'Accept: application/json', \
 			'Access-Control-Allow-Origin: *'],'200', 'PUT', request)
     if result['status'] == "error":
         print "Failed to remove subnet from router"

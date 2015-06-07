@@ -20,7 +20,7 @@ def add_image(self, appliance_spec):
     #Getting token:
     token_res = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
     if token_res['status'] == "error":
-        print "Error in getting token for user=%s, password=%s, project=%s " %(self.username, self.password, self.tenant)
+        #print "Error in getting token for user=%s, password=%s, project=%s " %(self.username, self.password, self.tenant)
         token_res['message'] = "Error in getting token for user="+self.username+", password="+self.password+", project="+self.tenant+ "\n"+ \
                                          str(token_res['message'])
         return token_res
@@ -30,7 +30,7 @@ def add_image(self, appliance_spec):
     
     if appliance_spec['url'] == "None" or appliance_spec['name'] == "None" :
         print "Appliance Name & appliance URL can't be None!"
-        return {"status": "error", "message": "Appliance Name & appliance URL can't be None!"}
+        return {"status": "error", "message": "Add image: Appliance Name & appliance URL can't be None!"}
             
     #header_list.append('x-glance-api-copy-from: ' + re.match(r'(.*).xvm2',appliance_spec['url']).group(1) + '.qcow2' )
     header_list.append('x-glance-api-copy-from: ' + appliance_spec['url'])
@@ -50,7 +50,7 @@ def add_image(self, appliance_spec):
 
     result = curl(self.controller + ':9292/v1/images', header_list, '201', 'POST')
     if result['status'] == "error":
-	result['message'] = "Cannot create image : "+result['message']
+	result['message'] = "Add image :Failed :\n"+result['message']
         return result
     #image_id = result['image']['id']
     #return {"image_id": image_id}

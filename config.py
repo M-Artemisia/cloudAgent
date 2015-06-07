@@ -3,7 +3,7 @@ password = "admin"
 tenant = "admin"
 controller = "10.1.48.242"
 
-demo_user_time = 600 # 20000 #120 
+demo_user_time = 60 # 20000 #120 
 
 Default_Image_User = "root"
 Default_Image_Pass = "ROOT_PASSWORD"

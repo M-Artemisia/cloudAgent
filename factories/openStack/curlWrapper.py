@@ -70,7 +70,7 @@ def curl(url, headers_list, response_code, method, req = None):
             curlObj.setopt(pycurl.POST,1)
             curlObj.setopt(pycurl.POSTFIELDS,request)
     else :
-        print "Unkown http method....", method
+        print "Curl: Unkown http method....", method
         return {"status":"error", "message":"Unkown http method"}
 
     """
@@ -93,7 +93,7 @@ def curl(url, headers_list, response_code, method, req = None):
         
     #status_code = curlObj.getinfo(pycurl.HTTP_CODE)    
     if headers.getvalue() is None :
-	print "Error in curl: No value in header"
+	print "Curl: Error: No value in header"
 	return {"status":"error", "message":"Header in response is None"}
 	#return False
 
@@ -106,19 +106,23 @@ def curl(url, headers_list, response_code, method, req = None):
             #return True
 	    return {'status':'success', 'message':''} #OR {'message':None} 
     else :
-        print "Error..."
-        print "HEADERS: ",headers.getvalue()
+	print "\n"
+ 	print "^^^^^^^^^^^^^^^^^  Curl Error...^^^^^^^^^^^^^^^^^^^"
+        print "HEADERS: ",headers.getvalue() #.splitlines()[0] to print only the first line
         x=json.loads(data.getvalue())
         print "DATA: ",data.getvalue()
+	print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+	print "\n"
 
         if "error" in x.keys() :
-            print "Error message : ", x["error"]["message"]
+            #print "Error message : ", x["error"]["message"]
 	    return {'status':'error' ,'message': x["error"]["message"]}
         #elif "Bad request" in x.keys() :
         elif "badRequest" in x.keys() :
-            print "Error message : ", x["badRequest"]["message"]
-	    return {'status': 'error', 'message': x["badRequest"]["message"]}
-
-        #return False
+            #print "Error message : ", x["badRequest"]["message"]
+	    return {'status': 'error', 'message':'badRequest: '+ x["badRequest"]["message"]}
+	elif "NeutronError" in x.keys() :
+            return {'status': 'error', 'message':'NeutronError: '+ x["NeutronError"]["message"]}
+        return {'status': 'error', 'message': 'An unspecified error occured in curl. One may like to add it to code'}
 
     print " "
