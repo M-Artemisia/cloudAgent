@@ -14,9 +14,10 @@ from time import sleep
 import resource
 import keystoneWrapper, computeWrapper
 
-#The code Checks to see if there is any free allocated ip for the tenant. if yes returns it and if no, allocates a new one.
 def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
-
+    ''' 
+    The code Checks to see if there is any free allocated ip for the tenant. if yes returns it and if no, allocates a new one.
+    '''
     request = {"pool": pool}
     float_ip_id = ""
     associated = False
@@ -84,10 +85,10 @@ def _generate_new_float_ip(self, user, password, project, tenant_id, pool):
 def _assign_float_ip(self, user, password, project, external_ip_pool, server):
 
     import resource 
-    print 
-    print resource
-    print type(resource)
-    print
+    #print 
+    #print resource
+    #print type(resource)
+    #print
 
 
     tenant_id = resource._get_resource_id(self,"TENANT",project)
@@ -100,6 +101,7 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
 	
     float_ip = _generate_new_float_ip(self, user, password, project, tenant_id, external_ip_pool) 
     if float_ip['status'] == "error" :
+	float_ip['message'] = "assign float ip: error in generating new float ip:\n"+ float_ip['message']
 	return float_ip
     float_ip = float_ip['message']
     
@@ -227,8 +229,8 @@ def add_router(self, user, password, project, router_name, gateway='ext-net', in
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "In add router: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
-                                         str(token_res['message'])
+        token_res['message'] = "In add router: Error in getting token for user="+user+", password="+password+", project=" \
+							+project+ "\n"+str(token_res['message'])
 	return token_res
     token = str(token_res['message'])
 

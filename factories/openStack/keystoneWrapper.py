@@ -39,8 +39,8 @@ def add_user(self,name, password,project):
     #Getting token:
     token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
-        token_res['message'] = "Add user: Error in getting token for user="+ self.username +", password="+ self.password+ \ 
-		", project="+ self.tenant + "\n"+ token_res['message']
+        token_res['message'] = "Add user: Error in getting token for user="+ self.username +", password="+ self.password \
+					+", project="+ self.tenant + "\n"+ token_res['message']
         return token
     token = token['message']
     
@@ -127,7 +127,7 @@ def add_tenant(self, name, desc, ram, vcpu, instances):
     #Getting token:
     token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
-    token_res['message'] = "Add tenant: Error in getting token for user="+ self.username +", password="+ self.password+ \
+    	token_res['message'] = "Add tenant: Error in getting token for user="+ self.username +", password="+ self.password+ \
                 ", project="+ self.tenant + "\n"+ token_res['message']
         return token
     token = token['message']
@@ -162,7 +162,7 @@ def add_tenant(self, name, desc, ram, vcpu, instances):
 def remove_tenant(self, project_name):
 
     if project_name is None :
-        print "Failed to remove tenant" project name cant be Null"
+        print "Failed to remove tenant: project name cant be Null"
         return {'status':'error', 'message':'Remove tenant: Project name cannot be null'}
 
     tenant_id = resource._get_resource_id(self,"TENANT",project_name)

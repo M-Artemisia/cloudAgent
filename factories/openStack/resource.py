@@ -93,10 +93,10 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
 	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message'] 
             return res
         resources = res['message']['images']
-
     elif resource_type == "SERVER":
             #/v2/{tenant_id}/servers
-        tenant_id =_get_resource_id(self,"TENANT", 'admin')
+        #tenant_id =_get_resource_id(self,"TENANT", 'admin')
+        tenant_id =_get_resource_id(self,"TENANT", tenant)
         if tenant_id['status'] == "error":
             tenant_id['message'] = "Error in getting floavor: Failed to get tenant id :\n" + tenant_id['message']
             return tenant_id

@@ -85,8 +85,8 @@ def curl(url, headers_list, response_code, method, req = None):
     try :
         curlObj.perform()
     except Exception as e:
-        print "Excteption occured in curl : ",e
-	return {"status":"error", "message":"Excteption occured in curl"}
+        print "Excteption occured in curl : ", str(e)
+	return {"status":"error", "message":"Excteption occured in curl : " + str(e)}
 	#return False
     curlObj.close()
 

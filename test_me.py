@@ -12,13 +12,13 @@ password= "jbjbjbjb_"
 prj="VPC_XAAS_demo"
 
 wrapper = xass_wrapper()
-
+#'''
 result = wrapper.create_VPC({"name":user, "pass": password, "project": prj},'linux')
 if result['status'] == "success" :
     print "---- Create VPC : Success -------\n\n"
 else:
     print"---- Create VPC : error message: --------\n" + result['message'] + '\n' 
-
+#'''
 
 ''' 
 int_net = 'xaas_int'+'_VPC'
@@ -39,17 +39,21 @@ user2="asemani_demo_2"
 ##print wrapper.create_vpc({"name":user, "pass": password, "project": prj},'linux','192.168.83.0/24')
 
 #--------------- Add image to glance --------------
-""" 
+''' 
 appliance_spec= {'url':'http://10.1.48.9/appliances/xgiSlave-jcloud-940205.qcow2', 'name':'xgiSlave-jcloud-940205', \
 	'installed_size':'40', 'memory':'2', 'storage':'40'}
 
 result = wrapper.create_Image({"url":appliance_spec['url'], "name": appliance_spec['name'], \
 	"installed_size":appliance_spec["installed_size"], "memory":appliance_spec["memory"], "storage": appliance_spec["storage"]})
 if result['status'] == "error":
+    print "---------------Error - Trace :------------------"
     print result['message']
 else:
+    print "------------------Done----------------------"
+    print "image id : ", result['message'] 
     print "Image Successfully added to openstack"
-"""
+'''
+#---------------------- End ----------------------
 
 '''
 create_user(user_dict) Function

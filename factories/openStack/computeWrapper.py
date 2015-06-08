@@ -18,9 +18,10 @@ def install_server(self, user, password, project, instance_name, external_ip_poo
     Assumptions: the xaas_for_startup for flavor & external network is assigned by default
     TODO: i use int as internal_network_NAME. we shpuld find the name of the internal net based on router:external element of the network API
     '''
-    
+
+    #print "flavor in install_server is: ", flavor    
+    print "Install server..."
     print "STEP 1"
-    print "flavor is: ", flavor
 
     internal_net_id = resource._get_resource_id(self,"NETWORK",internal_ip_pool)
     if internal_net_id['status'] == "error":
@@ -83,7 +84,7 @@ def install_server(self, user, password, project, instance_name, external_ip_poo
     print "STEP 6"
 
     octets = re.split('(.*)\.(.*)\.(.*)\.(.*)', network)
-    print "the image is installed. its invalid_ip: %s and the valid_ip: 217.218.62.%s" %(network, str(octets[4:5].pop())); print; print #TEST
+    print "the image is installed. its invalid_ip: %s and the valid_ip: 217.218.62.%s" %(network, str(octets[4:5].pop()))
 
     print "STEP 7"
 
@@ -98,7 +99,7 @@ def remove_server(self, user, password, project, server):
         return tenant_id_res
     tenant_id = str(tenant_id_res['message'])
 
-    print "STEP 1: tenant_id is ",tenant_id 
+    print "Remove Server STEP 1: tenant_id is ",tenant_id 
 
     ##server_id = resource._get_resource_id(self,"SERVER",server, self.username, self.password, self.tenant)
     #server_id = resource._get_resource_id(self,"SERVER",server, user, password, project)
@@ -106,13 +107,14 @@ def remove_server(self, user, password, project, server):
     server_id_res = resource._get_resource_id(self,"SERVER",server, user, password, project)
     if server_id_res['status'] == "error" :
 	server_id_res['message'] = "Remove Server Step 1: error in getting resource id:\n"+server_id_res['message']
+	return server_id_res 
     server_id = str(server_id_res['message'])
     print "Server id is : ", server_id
 
-    #----- Added to get float_ip associated with the server to release
+    #----- Add to get float_ip associated with the server to release
     #The code works when there is only one floating_ip in the tenant. 
     #In demo, the server and the ip associated to it, are created in their tenant. so it's ok to just retrun the first entry of the curl result :)
-    print "STEP 2: release float ip"
+    print "Remove Server STEP 2: release float ip"
     #1_"getting the float ip id"
     #float_ip_id = resource._get_floatip_id(self,"FLOATIP", tenant_id, user, password, project)
     
@@ -120,7 +122,7 @@ def remove_server(self, user, password, project, server):
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "Remove server: release floating ip: Error in getting token for user=" +user+ ", password=" + password +" , project=" + project+ ":\n"+ token_res['message']
+        token_res['message'] = "Remove server Step 2: release floating ip: Error in getting token for user=" +user+ ", password=" + password +" , project=" + project+ ":\n"+ token_res['message']
 	return token_res
     token = token_res['message']
     #
@@ -166,12 +168,12 @@ def remove_server(self, user, password, project, server):
                 print "STEP 2: Cannot deallocate floating IP from the server!!--" #only print, no error return value
                 #return False #We don't retrun Flase here
             else :
-                print "STEP 2: Floating ip deallocated" #only print, no error return value
+                print "Remove Server STEP 2: Floating ip deallocated" #only print, no error return value
         except:
-            print "STEP 2: Cannot deallocate floating IP from the server!!--"  #only print # We Don't return false
+            print "Remove Server STEP 2: Cannot deallocate floating IP from the server!!--"  #only print # We Don't return false
      	    
 
-    print "STEP 3: server_id is ", server_id
+    print "Remove Server STEP 3: server_id is ", server_id
 
     request = '{"force_delete": null}' 
     
@@ -180,10 +182,10 @@ def remove_server(self, user, password, project, server):
  				'Access-Control-Allow-Origin: *'], '204', 'DELETE')
     
     #print self.controller + ':8774/v2/'+ tenant_id + '/servers/' + server_id +'HEADERS: X-Auth-Token: ' + keystoneWrapper.get_token(self, self.username, self.password, self.tenant) + '  -H Content-Type: application/json'+'  -H Accept: application/json   '+'  -H Access-Control-Allow-Origin: *'+'  204', '  DELETE'
-    print "STEP 3: "
+    print "STEP 4: "
     if result['status'] == "error" :
   	print "Failed to remove server : "
-	result['message'] = "Remove Server Step 3: Failed to remove server : \n"+ str(result['message']) 
+	result['message'] = "Remove Server Step 4: Failed to remove server : \n"+ str(result['message']) 
 	return result
     print "server is removed"
     return result  #result is not used, only success is important
@@ -290,8 +292,8 @@ def list_float_ips(self, user, password, project, tenant_id):
     #Getting token:
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
-    token_res['message'] = "List_float_ips: Error in getting token for user=" + user+ \
-                                ", password=" + password +" , project=" + project +" \n"+ token_res['message']
+    	token_res['message'] = "List_float_ips: Error in getting token for user=" + user \
+                                + ", password=" + password +" , project=" + project +" \n"+ token_res['message']
         return token_res
     token = token_res['message']
     #    

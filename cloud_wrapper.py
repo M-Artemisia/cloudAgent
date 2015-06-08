@@ -46,7 +46,7 @@ class xass_wrapper:
         self.VPS_sec_group = config.VPS_sec_group
         
 
-        print "internal_net_add: ", self._get_internal_net_add()  #Needs error handling
+        #print "testing _get_internal_net_add", self._get_internal_net_add()
         
 
     def create_user(self,user_dict,server_dict):
@@ -75,7 +75,7 @@ class xass_wrapper:
 
         result = self._add_project(user_dict['project'], prj_desc, ram, cpu, instance_num)
         if result['status'] == "error" :
-	    result['messgae'] = "In create user : ", result['messgae']
+	    result['messgae'] = "In create user : \n", result['messgae']
 	    return result
 
         print "Creating user...."
@@ -98,7 +98,7 @@ class xass_wrapper:
                 time.sleep(config.demo_user_time)
                 print; print "Im Removing Demo User & Project....................."
                 result = self.cleanup(user_dict,server_dict)
-		result['messgae'] = "In create user : \n", result['messgae'] #in any case. Only adding method name to the message.
+		result['message'] = "Removing Demo user and project: \n", result['messgae'] #in any case. Only adding method name to the message.
                 os._exit(0)
                 
         return result
@@ -130,7 +130,7 @@ class xass_wrapper:
 
         result = self.create_user(user_dict,server)
 	if result['status'] == "error":
-	    result['messgae'] = "In create VPC : \n", result['messgae']
+	    result['messgae'] = "In create VPC : ", result['messgae']
             return result
 
         print "Creating Network for VPC....."
@@ -138,7 +138,7 @@ class xass_wrapper:
  	if result['status'] == "error":
             print "Error in Adding Network"
             result2 = self.cleanup(user_dict,server) #cleanup handles error message
-	    result['message'] = "In create VPC :\n" + result['message'] +"\n"+ result2['message']
+	    result['message'] = "In create VPC : " + result['message'] +"\n"+ result2['message']
 	    return result
 
         print "Creating Router FOR VPC....."
@@ -146,7 +146,7 @@ class xass_wrapper:
 	if result['status'] == "error" :
             print "Cant add router...."
             result2 = self.cleanup(user_dict,server)
-	    result['message'] = "In create VPC : \n" + result['message'] +"\n"+ result2['message']
+	    result['message'] = "In create VPC :\n" + result['message'] +"\n"+ result2['message']
             return result
 
         print "Creating a demo VPS on VPC .........."
@@ -209,7 +209,7 @@ class xass_wrapper:
     #*************************************PRIVATE FUNCTIONS**************************
     def _add_user(self, user_dict):
         result = self.adaptor.add_user(user_dict['name'], user_dict['pass'], user_dict['project'])
-	if result['status'] == "error" :
+	#if result['status'] == "error" :
             #print "Error Accured in Adding User ....... "
 	    #result['message'] = "In add user: \n" + result['message']
             #return result
@@ -217,7 +217,7 @@ class xass_wrapper:
 
     def _add_project(self, project_name, description, ram, vcpu, instances):
         result = self.adaptor.add_tenant(project_name, description, ram, vcpu, instances)
-        if result['status'] == "error" :
+        #if result['status'] == "error" :
             #print "Error Accured in Adding Project ....... "
             #result['message'] = "In add project :\n" + result['message']
             #return result
@@ -227,7 +227,7 @@ class xass_wrapper:
 
         #file = open("/root/asemani/new_xaas_2/apps/xCloudAgent/test.ini", "r")
         file = open("test.ini", "r")
-        print os.getcwd() 
+        print "current working directory", os.getcwd() 
         self.VPC_int_3rd_oct_crnt = file.read()
         file.close()
         print "first line in function: _3rd_crnt is: ", self.VPC_int_3rd_oct_crnt
@@ -321,4 +321,4 @@ class xass_wrapper:
                 result_s['message'] = result_s['message'] + "\n" + result_u['message']
 
 
-        return result
+        return result_s

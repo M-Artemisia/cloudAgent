@@ -28,21 +28,21 @@ def add_image(self, appliance_spec):
 
     header_list = ['X-Auth-Token: ' + token,  'x-image-meta-disk_format: qcow2', 'x-image-meta-container_format: bare','x-image-meta-is_public: true']
     
-    if appliance_spec['url'] == "None" or appliance_spec['name'] == "None" :
+    if not appliance_spec['url'] or not appliance_spec['name'] : #Null strings, appliance_spec['name'] == None did not work for ""
         print "Appliance Name & appliance URL can't be None!"
         return {"status": "error", "message": "Add image: Appliance Name & appliance URL can't be None!"}
-            
+
     #header_list.append('x-glance-api-copy-from: ' + re.match(r'(.*).xvm2',appliance_spec['url']).group(1) + '.qcow2' )
     header_list.append('x-glance-api-copy-from: ' + appliance_spec['url'])
     header_list.append('x-image-meta-name: ' + appliance_spec['name'])
 
-    if appliance_spec["installed_size"] != "None" :
+    if not appliance_spec["installed_size"] : # if null string
         header_list.append('x-image-meta-size: ' + appliance_spec["installed_size"])
 
-    if appliance_spec["memory"] != "None" :
+    if not appliance_spec["memory"] : # if null string
         header_list.append('x-image-meta-min_ram: ' + appliance_spec["memory"])
 
-    if appliance_spec["storage"] != "None" :
+    if not appliance_spec["storage"] : # if null string
         header_list.append('x-image-meta-min_disk: ' + appliance_spec["storage"])
  
 
@@ -50,7 +50,7 @@ def add_image(self, appliance_spec):
 
     result = curl(self.controller + ':9292/v1/images', header_list, '201', 'POST')
     if result['status'] == "error":
-	result['message'] = "Add image :Failed :\n"+result['message']
+	result['message'] = "Add image - Failed :\n"+result['message']
         return result
     #image_id = result['image']['id']
     #return {"image_id": image_id}
