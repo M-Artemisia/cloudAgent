@@ -21,12 +21,12 @@ def add_image(self, appliance_spec):
     token_res = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(self.username, self.password, self.tenant)
-        token_res['message'] = "Error in getting token for user="+self.username+", password="+self.password+", project="+self.tenant+ "\n"+ \
-                                         str(token_res['message'])
+        token_res['message'] = "Error in getting token for user="+self.username+", password="+self.password+", project="+self.tenant+ "\n" \
+                                         + str(token_res['message'])
         return token_res
     token = str(token_res['message'])
 
-    header_list = ['X-Auth-Token: ' + token,  'x-image-meta-disk_format: qcow2', 'x-image-meta-container_format: bare','x-image-meta-is_public: true']
+    header_list = ['X-Auth-Token: '+token, 'x-image-meta-disk_format: qcow2', 'x-image-meta-container_format: bare','x-image-meta-is_public: true']
     
     if not appliance_spec['url'] or not appliance_spec['name'] : #Null strings, appliance_spec['name'] == None did not work for ""
         print "Appliance Name & appliance URL can't be None!"
@@ -50,7 +50,7 @@ def add_image(self, appliance_spec):
 
     result = curl(self.controller + ':9292/v1/images', header_list, '201', 'POST')
     if result['status'] == "error":
-	result['message'] = "Add image - Failed :\n"+result['message']
+	result['message'] = "Add image - Failed :\n"+ str(result['message'])
         return result
     #image_id = result['image']['id']
     #return {"image_id": image_id}

@@ -12,13 +12,21 @@ password= "jbjbjbjb_"
 prj="VPC_XAAS_demo"
 
 wrapper = xass_wrapper()
-#'''
+'''#--------------- Create VPC  --------------
 result = wrapper.create_VPC({"name":user, "pass": password, "project": prj},'linux')
 if result['status'] == "success" :
-    print "---- Create VPC : Success -------\n\n"
+    print "---- Create VPC finished : Success -------\n\n"
 else:
-    print"---- Create VPC : error message: --------\n" + result['message'] + '\n' 
-#'''
+    print "---- Create VPC finished : error message: -----\n" + str(result['message']) + '\n' 
+'''#------------------------------------------
+
+''' test
+user2="asemani_demo_2"
+print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
+print wrapper.create_vpc({"name":user, "pass": password, "project": prj},'linux','192.168.83.0/24')
+'''
+
+
 
 ''' 
 int_net = 'xaas_int'+'_VPC'
@@ -30,13 +38,15 @@ server={'net':int_net, 'subnet':int_subnet, 'router': router, 'server': server_n
 print wrapper.cleanup({"name":user, "pass": password, "project": prj+'_VPC'}, server)
 '''
 
+#--------------- Create VPC  --------------
 ##create_VPS(self, image, ram-M, vcpus, disk-G)
-#print wrapper.create_VPS('linux', 3000, 1, 10)
+result = wrapper.create_VPS('linux', 3000, 1, 10)
+if result['status'] == "success" :
+    print "---- Create VPS finished : Success -------\n\n"
+else:
+    print "---- Create VPS finished : error message: -----\n" + str(result['message']) + '\n' 
+#------------------------------------------
 
-
-user2="asemani_demo_2"
-##print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
-##print wrapper.create_vpc({"name":user, "pass": password, "project": prj},'linux','192.168.83.0/24')
 
 #--------------- Add image to glance --------------
 ''' 

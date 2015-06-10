@@ -44,7 +44,7 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
         res = _resources_list(':5000/v3/projects', '200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message'] 
+	    res['message'] = "There is not any "+str(resource_type)+" on openstack.\n" + str(res['message'])
             return res
         resources = res['message']["projects"]
 
@@ -52,7 +52,7 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
         res = _resources_list(':5000/v3/users','200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message'] 
+	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message'])
             return res
         resources = res['message']['users']
         
@@ -60,7 +60,7 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
         res = _resources_list(':5000/v3/roles','200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-            res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message']
+            res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message'])
 	    return res
         resources = res['message']['roles']
 
@@ -68,14 +68,14 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
 
 	tenant_id =_get_resource_id(self,"TENANT", 'admin')
 	if tenant_id['status'] == "error":
-	    tenant_id['message'] = "Error in getting floavor: Failed to get tenant id :\n" + tenant_id['message']
+	    tenant_id['message'] = "Error in getting floavor: Failed to get tenant id :\n" + str(tenant_id['message'])
 	    return tenant_id
 	tenant_id = tenant_id['message']   
 
         res = _resources_list(':8774/v2/' + tenant_id + '/flavors','200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message'] 
+	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message'])
             return res
         resources = res['message']['flavors']
 
@@ -83,14 +83,14 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
             #/v2/{tenant_id}/images
         tenant_id =_get_resource_id(self,"TENANT", 'admin')
         if tenant_id['status'] == "error":
-            tenant_id['message'] = "Error in getting floavor: Failed to get tenant id :\n" + tenant_id['message']
+            tenant_id['message'] = "Error in getting floavor: Failed to get tenant id :\n" + str(tenant_id['message'])
             return tenant_id
         tenant_id = tenant_id['message']
 
         res = _resources_list(':8774/v2/' + tenant_id + '/images','200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message'] 
+	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message']) 
             return res
         resources = res['message']['images']
     elif resource_type == "SERVER":
@@ -98,14 +98,14 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
         #tenant_id =_get_resource_id(self,"TENANT", 'admin')
         tenant_id =_get_resource_id(self,"TENANT", tenant)
         if tenant_id['status'] == "error":
-            tenant_id['message'] = "Error in getting floavor: Failed to get tenant id :\n" + tenant_id['message']
+            tenant_id['message'] = "Error in getting floavor: Failed to get tenant id :\n" + str(tenant_id['message'])
             return tenant_id
         tenant_id = tenant_id['message']
 
         res = _resources_list(':8774/v2/' + tenant_id + '/servers','200', username, password,tenant)
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message'] 
+	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message'])
             return res
         resources = res['message']['servers']
 
@@ -114,7 +114,7 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
         res = _resources_list(':9696/v2.0/networks','200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message'] 
+	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message'])
             return res
         resources = res['message']['networks']
 
@@ -122,7 +122,7 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
         res = _resources_list(':9696/v2.0/networks','200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message']
+	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message'])
             return res
         resources = res['message']['networks']
 
@@ -130,7 +130,7 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
         res = _resources_list(':9696/v2.0/subnets','200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message'] 
+	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message'])
             return res
         resources = res['message']['subnets']
 
@@ -138,7 +138,7 @@ def _get_resource_id(self, resource_type, resource_name, username=None, password
         res = _resources_list(':9696/v2.0/routers','200')
         if res['status'] == "error":
             #print "There is not any %s on Openstack!" %(resource_type)
-	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + res['message']
+	    res['message'] = "There is not any "+resource_type+" on openstack.\n" + str(res['message'])
             return res
         resources = res['message']['routers']
 
