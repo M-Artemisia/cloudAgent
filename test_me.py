@@ -7,26 +7,25 @@ password= "mali123asemani098_"
 prj="VPC_XAAS_demo"
 '''
 
+wrapper = xass_wrapper()
+
+#--------------- Create VPC  --------------
 user="jabbari_demo_1"
 password= "jbjbjbjb_"
 prj="VPC_XAAS_demo"
 
-wrapper = xass_wrapper()
-'''#--------------- Create VPC  --------------
 result = wrapper.create_VPC({"name":user, "pass": password, "project": prj},'linux')
 if result['status'] == "success" :
-    print "---- Create VPC finished : Success -------\n\n"
+    print "\n---- Create VPC finished : Success -------\n\n"
 else:
-    print "---- Create VPC finished : error message: -----\n" + str(result['message']) + '\n' 
-'''#------------------------------------------
+    print "\n---- Create VPC error message: -----\n" + str(result['message']) + '\n' 
+#------------------------------------------
 
 ''' test
 user2="asemani_demo_2"
 print wrapper.create_VPC({"name":user2, "pass": password, "project": prj},'linux')
 print wrapper.create_vpc({"name":user, "pass": password, "project": prj},'linux','192.168.83.0/24')
 '''
-
-
 
 ''' 
 int_net = 'xaas_int'+'_VPC'
@@ -38,18 +37,19 @@ server={'net':int_net, 'subnet':int_subnet, 'router': router, 'server': server_n
 print wrapper.cleanup({"name":user, "pass": password, "project": prj+'_VPC'}, server)
 '''
 
-#--------------- Create VPC  --------------
-##create_VPS(self, image, ram-M, vcpus, disk-G)
-result = wrapper.create_VPS('linux', 3000, 1, 10)
+'''#--------------- Create VPS  --------------
+#Sample: create_VPS(self, image, ram-M, vcpus, disk-G)
+result = wrapper.create_VPS('linux', 3000, 1, 10) #3000
 if result['status'] == "success" :
-    print "---- Create VPS finished : Success -------\n\n"
+    print "\n---- Create VPS finished : Success -------"
+    print "IP : ", result['message']; print; print;
+
 else:
-    print "---- Create VPS finished : error message: -----\n" + str(result['message']) + '\n' 
-#------------------------------------------
+    print "\n---- Create VPS finished : error message: -----\n" + str(result['message']) + '\n' 
+'''#------------------------------------------
 
 
-#--------------- Add image to glance --------------
-''' 
+'''#--------------- Add image to glance -------------- 
 appliance_spec= {'url':'http://10.1.48.9/appliances/xgiSlave-jcloud-940205.qcow2', 'name':'xgiSlave-jcloud-940205', \
 	'installed_size':'40', 'memory':'2', 'storage':'40'}
 
@@ -62,8 +62,7 @@ else:
     print "------------------Done----------------------"
     print "image id : ", result['message'] 
     print "Image Successfully added to openstack"
-'''
-#---------------------- End ----------------------
+'''#---------------------- End ----------------------
 
 '''
 create_user(user_dict) Function

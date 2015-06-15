@@ -73,9 +73,9 @@ class xass_wrapper:
         user_dict['project'] = user_dict['project']+ time.strftime("%Y%m%d_%H%M%S", time.gmtime()) #+'_VPC' 
         self.user = user_dict
 
-        result = self._add_project(user_dict['project'], prj_desc, ram, cpu, instance_num)
+        result = self._add_project(user_dict['project'], prj_desc, ram, cpu, instance_num) ####
         if result['status'] == "error" :
-	    result['message'] = "In create user : \n", str(result['message'])
+	    result['message'] = "In create user : \n"+ str(result['message'])
 	    return result
 
         print "Creating user...."
@@ -101,7 +101,7 @@ class xass_wrapper:
                 print "-----------------------------------"
 		print result['message']
 		os._exit(0)  #Because at this point, function has returned already.
-                
+
         return result
 
     def create_VPC(self, user_dict, image):
@@ -120,7 +120,7 @@ class xass_wrapper:
         else:
             image = self.Default_Windows_Image
         
-        network_address = self._get_internal_net_add()
+        network_address = self._get_internal_net_add()  #exception handling might be needed here
 
         int_net = 'xaas_vpc_int_'+ time.strftime("%Y%m%d_%H%M%S", time.gmtime())
         int_subnet = 'xaas_vpc_subnet_'+ time.strftime("%Y%m%d_%H%M%S", time.gmtime())
