@@ -70,14 +70,14 @@ def install_server(self, user, password, project, instance_name, external_ip_poo
     print "STEP 4"
     if result['status'] == "error" :
         print "Failed to install server"
-	result['message'] = "Install Server Step 4: Failed to install server :\n", str(result['message'])
+	result['message'] = "Install Server Step 4: Failed to install server :\n"+ str(result['message'])
         return result
 
     print "STEP 5"
     #sleep(10)
     network_res = neutronWrapper._assign_float_ip(self, user, password, project, external_ip_pool, instance_name)
     if network_res['status'] == "error":
-        network_res['message'] = "Install Server Step 5: Failed to assign float ip :\n", str(network_res['message'])
+        network_res['message'] = "Install Server Step 5: Failed to assign float ip :\n"+ str(network_res['message'])
         return network_res
     network = network_res['message']
 
@@ -148,6 +148,7 @@ def remove_server(self, user, password, project, server):
 
     if float_ip_id and not float_ip_id.isspace():  #if float_ip_id != "":
         try:
+	    ''' # ----We may need to add this part... 
  	    #"2_removing the float ip from the server"
     	    request = {"removeFloatingIp": {"address": str(float_ip)}}
     	    result = curl(self.controller + ':8774/v2/' + tenant_id + '/servers/' + str(server_id) +'/action', \
@@ -158,7 +159,7 @@ def remove_server(self, user, password, project, server):
         	print "Cannot disassociate floating ip from the server" #only print, no error return value
     	    else:
         	print "Floating ip disassociated from the server" #only print, no error return value
-   	    
+   	    '''
 
 	    #3_deallocating float ip - DO NOT USE ADMIN TOKEN! You can only deallocate ips allocated to a tenant using the token for that tenant!!
             """ipresult = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(float_ip_id) , ['X-Auth-Token: ' + token ,\
@@ -196,7 +197,7 @@ def add_flavor(self, user, password, project, flavor_name, ram, vcpus, disk):
     #ram based on M, disk Based on G
     print "Flavor Add Function "
     
-    tenant_id_res = resource._get_resource_id(self,"TENANT",project)
+    tenant_id_res = resource._get_resource_id(self,"TENANT",self.tenant) #self.tenant, not project!
     if tenant_id_res['status'] == "error" :
 	tenant_id_res['message'] = "Add Flavor: error in getting resource id:\n"+ tenant_id_res['message']
         return tenant_id_res
@@ -228,7 +229,7 @@ def add_flavor(self, user, password, project, flavor_name, ram, vcpus, disk):
 def remove_flavor(self, user, password, project,flavor):
 
     print "Testing Flavor Remove Function "
-    tenant_id_res = resource._get_resource_id(self,"TENANT",project)
+    tenant_id_res = resource._get_resource_id(self,"TENANT", self.tenant) #self.tenant, not project
     if tenant_id_res['status'] == "error" :
         tenant_id_res['message'] = "Remove Flavor: error in getting resource id:\n" + str(tenant_id_res['message'])
         return tenant_id_res

@@ -39,8 +39,8 @@ class openstackRestAdaptor(openstackAbstractAdaptor):
         self.admin_role_id_res= resource._get_resource_id(self,"TENANT",'admin')
         self.member_role_id_res= resource._get_resource_id(self,"ROLE","_member_")
         if (self.admin_role_id_res['status'] == "error") or (self.member_role_id_res['status'] == "error") :
-            str = "It seems the Openstack has not correct roles for admin and _member_ \n"+str(self.admin_token_res['message'])
-            return {'status' :'error', 'message': str}
+            st = "It seems the Openstack has not correct roles for admin and _member_ \n"+str(self.admin_token_res['message'])
+            return {'status' :'error', 'message': st}
         self.admin_role_id = self.admin_role_id_res['message']
         self.member_role_id = self.member_role_id_res['message']
 	"""
