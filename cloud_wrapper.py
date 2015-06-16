@@ -191,8 +191,9 @@ class xass_wrapper:
         print "I am removing flavor..............."
         result = self.adaptor.remove_flavor(self.VPS_project_user, self.VPS_project_pass, self.VPS_project_name, flavor)
 	if result['status'] == "error":
-	    print "In create VPS: Failed to remove Flavor" #only print. don't return becuase the server has installed.
+	    print "In create VPS: Failed to remove Flavor:\n"+ str(result['message']) #only print. don't return becuase the server has installed.
         	
+
 	return ip_result #contains ip
 
 
@@ -274,7 +275,7 @@ class xass_wrapper:
             print; print; print "Removing Server ********************************************* ", server[ 'server']
             result_s = self.adaptor.remove_server(user['name'], user['pass'], user['project'], server[ 'server'])
 	    if result_s['status'] == "success":
-		result_s['message'] = "Cleaning server: Server Removed successfully " #neccessary
+		result_s['message'] = "Server Removed successfully " #neccessary
                 time.sleep(3.0)
                 print; print; print "Removing Router ********************************************* ", server['router']
                 #if self.adaptor.remove_router(user['name'], user['pass'], user['project'], server['router'], server['subnet']) :
@@ -291,9 +292,11 @@ class xass_wrapper:
 		    result_s['message'] = str(result_s['message'])+"but router and thus network did not remove successfully:\n" \
 											+ str(result_r['message'])
 		    #return result    # dont return.
-		    
+	            if result_s['status'] == "success":
+			result_s['message'] = result_s['message'] + ", so thoes the router and network. "		    
+
             else:
-		result_s['message'] = "\nCleaning Server:\n" + str(result_s['message'])
+		result_s['message'] = "\nCleaning Server (so thoes the router and network) failed:\n" + str(result_s['message'])
                 #return result    # dont return.
             ''' 
             if self.adaptor.remove_router(user['name'], user['pass'], user['project'], server['router'], server['subnet']) :
@@ -313,15 +316,18 @@ class xass_wrapper:
 		#result_t['message'] = "Cleaning User:\n"+ str(result_t['message'])
 	    	#return result #dont return
 		result_s['status'] = "error"
-		result_s['message'] = str(result_s['message']) + "\n" + str(result_t['message'])
+		result_s['message'] = str(result_s['message']) + "\n" + "Project did not remove successfully: "+str(result_t['message'])
+	    else:
+		result_s['message'] = str(result_s['message']) + "\n" + "Project Removed successfully "
 	    
             result_u = self.adaptor.remove_user(user['name'])
 	    if result_u['status'] == "error" :
                 #result_u['message'] = "Cleaning User:\n"+ str(result_u['message'])
                 #return result_u
 		result_s['status'] = "error"
-                result_s['message'] = str(result_s['message']) + "\n" + str(result_u['message'])
-
+                result_s['message'] = str(result_s['message']) + "\n" + "User did not remove successfully: "+ str(result_u['message'])
+	    else:
+		result_s['message'] = str(result_s['message']) + "\n" + "User Removed successfully "
 	if result_s['status'] == "success":
-	    print "Cleanup success: Server and user removed successfully"
+	    print "Cleanup success: Server, project and user removed successfully"
         return result_s

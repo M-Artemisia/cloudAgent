@@ -115,23 +115,20 @@ def curl(url, headers_list, response_code, method, req = None):
 	print "\n"
 
         if "error" in x.keys() :
-            #print "Error message : ", x["error"]["message"]
-	    try :
-	 	return {'status':'error' ,'message': x["error"]["message"]}
-	 	#return {'status':'error' ,'message': x["error"]["message"].encode("UTF-8")} 
-		#if we dont use encode, message might return a unicode string which can not be converted using str(). Example: curl ...:5000/v2.0/tokens
-	    except:
-	 	return {'status':'error' ,'message': x["error"]["message"]}
-        #elif "Bad request" in x.keys() :
-        elif "badRequest" in x.keys() :
-            #print "Error message : ", x["badRequest"]["message"]
-	    return {'status': 'error', 'message':'badRequest: '+ x["badRequest"]["message"]}
+	    return {'status':'error', 'message':'Curl: error: '+ x["error"]["message"]}
+	    #return {'status':'error' ,'message': x["error"]["message"].encode("UTF-8")} 
+	    #we may need to put encode and put it in try catch, because message might return a unicode string 
+	    #which can not be converted using str(). Example: curl ...:5000/v2.0/tokens
+        elif "badRequest" in x.keys() : #elif "Bad request" in x.keys() :
+	    return {'status': 'error', 'message':'Curl: badRequest: '+ x["badRequest"]["message"]}
 	elif "NeutronError" in x.keys() :
-            return {'status': 'error', 'message':'NeutronError: '+ x["NeutronError"]["message"]}
+            return {'status': 'error', 'message':'Curl: NeutronError: '+ x["NeutronError"]["message"]}
  	elif "forbidden" in x.keys() :
-            return {'status': 'error', 'message':'forbidden: '+ x["forbidden"]["message"]}
+            return {'status': 'error', 'message':'Curl: forbidden: '+ x["forbidden"]["message"]}
  	elif "computeFault" in x.keys() :
-            return {'status': 'error', 'message':'computeFault: '+ x["computeFault"]["message"]}
-        return {'status': 'error', 'message': 'An unspecified error occured in curl. One may like to add it to code'}
+            return {'status': 'error', 'message':'Curl: computeFault: '+ x["computeFault"]["message"]}
+ 	elif "itemNotFound" in x.keys() :
+	    return {'status': 'error', 'message':'Curl: itemNotFound: '+ x["itemNotFound"]["message"]}
+        return {'status': 'error', 'message': 'Curl: An unspecified error occured. One may like to add it to code'}
 
-    print " "
+    print

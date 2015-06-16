@@ -20,10 +20,10 @@ def get_token(self,username,password,tenant):
     request = {"auth": {"tenantName": tenant , "passwordCredentials": {"username": username , "password": password }}}
     result = curl(self.controller + ':5000/v2.0/tokens', ['Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], '200', 'POST', request)
     if result['status'] == "error" :
-        print "KEYSTONE:   ************************************************************************************"
+        print "KEYSTONE error:   *****************************************************************"
         print "request to get token: ", request
         #print "CurL:"+self.controller + ':5000/v2.0/tokens   ' + 'Content-Type: application/json    ' + 'Accept: application/json    ' + 'Access-Control-Allow-Origin: *    ' + '200'+ '   POST'
-	print "\n"
+	print
         return result
     return {"status":"success", "message": str(result['message']['access']['token']['id'])}
 
@@ -63,25 +63,23 @@ def _add_user_role(self, username, project):
     
     tenant_id = resource._get_resource_id(self,"TENANT",project)
     if tenant_id['status'] == "error" :
-	tenant_id['message'] = "Add user role: error in getting resource id:\n"+ tenant_id['message']
+	tenant_id['message'] = "Add user role: error in getting resource id:\n"+ str(tenant_id['message'])
         return tenant_id
-    tenant_id = tenant_id['message']
+    tenant_id = str(tenant_id['message'])
 
     user_id = resource._get_resource_id(self,"USER",username)
     if user_id['status'] == "error" :
-	user_id['message'] = "Add user role: error in getting resource id:\n" + user_id['message']
+	user_id['message'] = "Add user role: error in getting resource id:\n" + str(user_id['message'])
         return user_id
-    user_id = user_id['message']
+    user_id = str(user_id['message'])
     
     #Getting token:
-    #token = get_token(self, self.username,self.password,self.tenant)
-    token = get_token(self, self.username,self.password,"ttt")
+    token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
-	print token['message']
     	token['message'] = "Add user role: Error in getting token for user="+ str(self.username) +", password="+ str(self.password) \
                 + ", project="+ str(self.tenant) + "\n"+ str(token['message'])
         return token
-    token = token['message']
+    token = str(token['message'])
    
 
     self.member_role_id_res= resource._get_resource_id(self,"ROLE","_member_")
@@ -91,12 +89,12 @@ def _add_user_role(self, username, project):
     member_role_id = self.member_role_id_res['message']
 
 
-    result = curl(self.controller + ':5000/v3/projects/' + tenant_id + 'ttt/users/' + user_id + '/roles/' + member_role_id , \
+    result = curl(self.controller + ':5000/v3/projects/' + tenant_id + '/users/' + user_id + '/roles/' + member_role_id , \
                       ['X-Auth-Token: ' + str(token) , 'Content-Type: application/json','Access-Control-Allow-Origin: *'], '204', 'PUT')
 
     if result['status'] == "error" :
 	# jabbari: str(result['message']) failed because result['message'] was unicode string
-	result['message'] = "Failed to add role:\n" + result['message']
+	result['message'] = "Failed to add role:\n" + str(result['message'])
         return result
     return result
 
@@ -111,8 +109,8 @@ def remove_user(self,username):
     #Getting token:
     token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
-	token_res['message'] = "Remove user: Error in getting token for user="+ self.username +", password="+ self.password+ \
-                ", project="+ self.tenant + "\n"+ str(token_res['message'])
+	token['message'] = "Remove user: Error in getting token for user="+ self.username +", password="+ self.password+ \
+                ", project="+ self.tenant + "\n"+ str(token['message'])
         return token
     token = token['message']
 
@@ -178,8 +176,8 @@ def remove_tenant(self, project_name):
     # Getting token
     token = get_token(self, self.username,self.password,self.tenant)
     if token['status'] == "error":
-	token_res['message'] = "Remove tenant: Error in getting token for user="+ self.username +", password="+ self.password+ \
-                ", project="+ self.tenant + "\n"+ str(token_res['message'])
+	token['message'] = "Remove tenant: Error in getting token for user="+ self.username +", password="+ self.password+ \
+                ", project="+ self.tenant + "\n"+ str(token['message'])
         return token
     token = token['message']
 

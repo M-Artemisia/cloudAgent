@@ -104,7 +104,7 @@ def remove_server(self, user, password, project, server):
     ##server_id = resource._get_resource_id(self,"SERVER",server, self.username, self.password, self.tenant)
     #server_id = resource._get_resource_id(self,"SERVER",server, user, password, project)
     ##server_id = resource._get_resource_id(self,"SERVER",server,project)
-    server_id_res = resource._get_resource_id(self,"SERVER",server, user, password, project)
+    server_id_res = resource._get_resource_id(self,"SERVER",server , user, password, project)
     if server_id_res['status'] == "error" :
 	server_id_res['message'] = "Remove Server Step 1: error in getting resource id:\n"+ str(server_id_res['message'])
 	return server_id_res
@@ -162,9 +162,6 @@ def remove_server(self, user, password, project, server):
    	    '''
 
 	    #3_deallocating float ip - DO NOT USE ADMIN TOKEN! You can only deallocate ips allocated to a tenant using the token for that tenant!!
-            """ipresult = curl(self.controller + ':8774/v2/' + tenant_id + '/os-floating-ips/' + str(float_ip_id) , ['X-Auth-Token: ' + token ,\
-                                'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
-                      	'202', 'DELETE')"""
 	    ipresult = deallocate_float_ip(self, user, password, project, tenant_id, str(float_ip_id))
 	    if ipresult['status'] == "error" :
                 print "STEP 2: Cannot deallocate floating IP from the server!!--" #only print, no error return value
@@ -205,7 +202,6 @@ def add_flavor(self, user, password, project, flavor_name, ram, vcpus, disk):
 
 
     #Getting token:
-    #token_res = keystoneWrapper.get_token(self, user, password, project)
     token_res = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
     if token_res['status'] == "error":
 	token_res['message'] = "Add flavor: Error in getting token for user=" +self.username+ \
@@ -242,8 +238,8 @@ def remove_flavor(self, user, password, project,flavor):
     flavor_id = flavor_id['message']
 
     #Getting token:
-    #token_res = keystoneWrapper.get_token(self, user, password, project)
     token_res = keystoneWrapper.get_token(self, self.username,self.password,self.tenant)
+    #token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
 	token_res['message'] = "Remove flavor: Error in getting token for user=" +self.username+ \

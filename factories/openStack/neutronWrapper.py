@@ -96,7 +96,6 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
         print "in assign float ip: cant find the project ",tenant_id 
         tenant_id['message'] = "assign float ip: error in getting resource id:\n"+ str(tenant_id['message'])
 	return tenant_id
-    #tenant_id = str(tenant_id['message'])
     tenant_id = tenant_id['message']
 	
     float_ip = _generate_new_float_ip(self, user, password, project, tenant_id, external_ip_pool) 
@@ -118,7 +117,7 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
     token = str(token_res['message'])
     #
     res = curl(self.controller + str(':8774/v2/' + tenant_id + '/servers'), \
-                   ['X-Auth-Token: ' + token, "Accept: application/json",'Access-Control-Allow-Origin: *'], '200', 'GET')
+                   ['X-Auth-Token: ' + token , "Accept: application/json",'Access-Control-Allow-Origin: *'], '200', 'GET')
            
     if res['status'] == "error":
         #print "cant find server list!"
@@ -130,7 +129,7 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
     for resource in resources :
         if server in resource['name'] :
             server_id = resource['id']
-
+     
     if not server_id :
         print "There is no server with name %s on open stack!"  % (server)
         return {"status" : "error" , "message" : "In assign float ip: There is no server with name "+server+" on open stack!"}
@@ -142,7 +141,7 @@ def _assign_float_ip(self, user, password, project, external_ip_pool, server):
                            'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'],'202', 'POST', request)
     #  -H "X-Auth-Project-Id: demo" -H "User-Agent: python-novaclient"
     if result['status'] == "error":
-        print "Neutron ERROR......Error in associating float-ip with the server"
+        print "Error in associating float-ip with the server"
         return  {"status" : "error" , "message" : "Error in associating float-ip with the server: \n"+str(result['message'])}
     return {"status" : "success" , "message" : float_ip}
 
@@ -165,14 +164,15 @@ def add_network(self, user, password, project, external=False,network_name='xaas
     token_res = keystoneWrapper.get_token(self, user, password, project)
     if token_res['status'] == "error":
         #print "Error in getting token for user=%s, password=%s, project=%s " %(user, password, project)
-        token_res['message'] = "In add network: Error in getting token for user="+user+", password="+password+", project="+project+ "\n"+ \
-                                         str(token_res['message'])
+        token_res['message'] = "In add network: Error in getting token for user="+str(user)+", password="+str(password) \
+					+", project=" + str(project)+ "\n"+ str(token_res['message'])
 	return token_res
     token = str(token_res['message'])
 
-    network = curl(self.controller + ':9696/v2.0/networks', ['X-Auth-Token: ' + token , \
-                            'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
-                       	      	'201', 'POST', request)
+    #token = "e434343" #testtt
+    network = curl(self.controller + ':9696/v2.0/networks', \
+		['X-Auth-Token: ' + token , 'Content-Type: application/json', \
+			'Accept: application/json','Access-Control-Allow-Origin: *'], '201', 'POST', request)
     if network['status'] == "error" :
 	network['message'] = "Cannot add network : \n"+ str(network['message'])
         return network
@@ -198,7 +198,7 @@ def add_subnet(self, user, password, project, network_id ,subent_name='xaas_subn
                            'Content-Type: application/json', 'Accept: application/json','Access-Control-Allow-Origin: *'], \
                       '201', 'POST', request)
     if subnet['status'] == "error":
-    	subnet['message'] = "Can not add subnet : "+ str(subnet['message'])
+    	subnet['message'] = "Can not add subnet :\n"+ str(subnet['message'])
     	return subnet
     return subnet
 
@@ -249,7 +249,7 @@ def add_router(self, user, password, project, router_name, gateway='ext-net', in
     #ADD Interface
     result = _add_interface_to_router(self,user, password, project, router_name,internal_subnet)
     if result['status'] == "error" :
-	interface['message'] = "In add router :\n"+ str(interface['message'])
+	result['message'] = "In add router :\n"+ str(result['message'])
     	return result
     return result 
 
@@ -280,7 +280,7 @@ def _add_interface_to_router(self, user, password, project, router_name, interna
     token = str(token_res['message'])
 
     interface = curl(self.controller + ':9696/v2.0/routers/'+ router_id + "/add_router_interface", \
-                         ['X-Auth-Token: ' + token, 'Content-Type: application/json',\
+                         ['X-Auth-Token: ' + token , 'Content-Type: application/json',\
 				 'Accept: application/json','Access-Control-Allow-Origin: *'], '200', 'PUT', request)
     if interface['status'] == "error" :
 	interface['message'] = "Failed to add interface to router :\n"+ str(interface['message'])
@@ -321,7 +321,7 @@ def remove_subnet(self, user, password, project, subnet):
 
     subnet_id = resource._get_resource_id(self,"SUBNET",subnet)
     if subnet_id['status'] == "error" :
-	subnet_id['message'] = "In remove subnet: Cannot find subnet "+str(internal_subnet)+" :\n"+ str(subnet_id['message'])
+	subnet_id['message'] = "In remove subnet: Cannot find subnet "+str(subnet)+" :\n"+ str(subnet_id['message'])
         return subnet_id
     subnet_id = subnet_id['message']
 
@@ -335,7 +335,7 @@ def remove_subnet(self, user, password, project, subnet):
 	return token_res
     token = str(token_res['message'])
 
-    result = curl(self.controller + ':9696/v2.0/subnets/'+ str(subnet_id), ['X-Auth-Token: ' + token ,\
+    result = curl(self.controller + ':9696/v2.0/subnets/'+ str(subnet_id) , ['X-Auth-Token: ' + token ,\
                            'Content-Type: application/json', 'Accept: application/json', 'Access-Control-Allow-Origin: *'], \
                       '204', 'DELETE')
     if result['status'] == "error" :
@@ -351,7 +351,7 @@ def remove_router(self, user, password, project, router):
 
     router_id = resource._get_resource_id(self,"ROUTER",router)
     if router_id['status'] == "error" :
-	router_id['message'] = "In remove router: Cannot find router "+str(router_name) + " :\n" + str(router_id['message'])
+	router_id['message'] = "In remove router: Cannot find router "+str(router) + " :\n" + str(router_id['message'])
         return router_id
     router_id = router_id['message']
 
@@ -375,7 +375,6 @@ def remove_router(self, user, password, project, router):
 
 
 def remove_interface_from_router(self, user, password, project, router, subnet):
-    print "Testing Remove Interface from Router Function "
 
     router_id = resource._get_resource_id(self,"ROUTER",router)
     if router_id['status'] == "error" :
